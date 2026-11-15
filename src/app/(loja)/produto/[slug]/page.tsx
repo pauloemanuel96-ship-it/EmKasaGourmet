@@ -5,6 +5,7 @@ import { AddToCart } from "@/components/loja/add-to-cart";
 import { AllergenBlock } from "@/components/loja/allergen-block";
 import { DemoPrice } from "@/components/loja/demo-price";
 import { DemoTag } from "@/components/loja/demo-tag";
+import { Photo } from "@/components/loja/photo";
 import { ProductImage } from "@/components/loja/product-image";
 import { RECIPES } from "@/demo/data";
 import { formatCents } from "@/lib/money";
@@ -40,7 +41,9 @@ export default async function ProdutoPage({
   const quote = p.quoteOnly || p.channel === "encomendas";
   const wa = whatsappLink(
     catalog.whatsapp,
-    `Olá! Quero um orçamento de "${p.name}" pela loja da Emkasa.`,
+    p.comingSoon
+      ? `Olá! Quero saber quando "${p.name}" estará disponível na loja da Emkasa.`
+      : `Olá! Quero um orçamento de "${p.name}" pela loja da Emkasa.`,
   );
 
   return (
@@ -68,7 +71,23 @@ export default async function ProdutoPage({
             priority
             sizes="(min-width: 768px) 50vw, 100vw"
           />
-          {p.isDemo && <DemoTag className="absolute top-3 left-3" />}
+          {p.isDemo && (
+            <DemoTag soon={p.comingSoon} className="absolute top-3 left-3" />
+          )}
+          {p.gallery.length > 0 && (
+            <ul className="mt-4 grid grid-cols-3 gap-3" aria-label="Mais fotos">
+              {p.gallery.map((g) => (
+                <li key={g.url}>
+                  <Photo
+                    src={g.url}
+                    alt={g.alt}
+                    ratio="3/4"
+                    sizes="(min-width: 768px) 16vw, 33vw"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
@@ -77,7 +96,11 @@ export default async function ProdutoPage({
             </p>
             <h1 className="text-4xl">{p.name}</h1>
             <p className="text-ink-600">{p.unitLabel}</p>
-            {p.isDemo ? (
+            {p.comingSoon ? (
+              <p className="text-terracotta-500 text-2xl font-medium">
+                Preço a definir
+              </p>
+            ) : p.isDemo ? (
               <DemoPrice slug={p.slug} />
             ) : (
               <p className="text-terracotta-500 text-2xl font-medium">
@@ -89,8 +112,9 @@ export default async function ProdutoPage({
           </div>
           {p.isDemo && (
             <p className="bg-sand-200 rounded-(--radius-control) p-3 text-sm">
-              Produto de demonstração: preço e disponibilidade são fictícios e
-              ele não está à venda.
+              {p.comingSoon
+                ? "Em breve na loja. Preço, embalagem, ingredientes e alergênicos estão sendo cadastrados."
+                : "Produto de demonstração: preço e disponibilidade são fictícios e ele não está à venda."}
             </p>
           )}
           {(p.description ?? p.short) && (
@@ -123,6 +147,17 @@ export default async function ProdutoPage({
                 Pedidos de orçamento abrem em breve.
               </p>
             )
+          ) : p.comingSoon ? (
+            wa ? (
+              <a
+                href={wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-forest-900 text-forest-900 hover:bg-sand-200 flex min-h-11 items-center justify-center rounded-(--radius-control) border px-5 font-medium"
+              >
+                Quero ser avisado pelo WhatsApp
+              </a>
+            ) : null
           ) : (
             <AddToCart product={p} />
           )}
@@ -134,13 +169,15 @@ export default async function ProdutoPage({
                 <dd className="text-ink-600">{p.ingredients.join(", ")}</dd>
               </div>
             )}
-            <div>
-              <dt className="font-medium">Conservação</dt>
-              <dd className="text-ink-600">
-                {STORAGE_LABEL[p.storage]}.
-                {p.conservation ? ` ${p.conservation}` : ""}
-              </dd>
-            </div>
+            {(!p.isDemo || p.conservation) && (
+              <div>
+                <dt className="font-medium">Conservação</dt>
+                <dd className="text-ink-600">
+                  {STORAGE_LABEL[p.storage]}.
+                  {p.conservation ? ` ${p.conservation}` : ""}
+                </dd>
+              </div>
+            )}
             {(p.yieldInfo || p.portions) && (
               <div>
                 <dt className="font-medium">Rendimento</dt>

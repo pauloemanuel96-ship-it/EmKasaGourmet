@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Photo } from "@/components/loja/photo";
 import { ProductArt } from "@/components/loja/product-art";
 import { ProductTile } from "@/components/loja/product-tile";
 import { Section } from "@/components/loja/section";
 import { BOX_PLANS, COURSES, RECIPES, TESTIMONIALS } from "@/demo/data";
 import { formatCents } from "@/lib/money";
+import { SITE_PHOTOS, STATIC_COVERS } from "@/modules/catalogo/static-photos";
 import { getStoreCatalog } from "@/modules/catalogo/store";
 
 /** Textos de cada seção da loja na vitrine (por slug da categoria real). */
@@ -74,8 +76,18 @@ export default async function Home() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <ProductArt name="Horta da semana" tone="#4f7343" />
-          <ProductArt name="Cozinha da Chef" tone="#a4462f" className="mt-10" />
+          <Photo
+            src={SITE_PHOTOS.saladaNoPote1.url}
+            alt={SITE_PHOTOS.saladaNoPote1.alt}
+            priority
+          />
+          <Photo
+            src={STATIC_COVERS["farofa-nutritiva-de-soja"].url}
+            alt={STATIC_COVERS["farofa-nutritiva-de-soja"].alt}
+            ratio="4/5"
+            priority
+            className="mt-10"
+          />
         </div>
       </section>
 
@@ -201,7 +213,11 @@ export default async function Home() {
         aria-labelledby="chef"
         className="mx-auto mt-24 grid max-w-6xl items-center gap-10 px-4 sm:px-6 md:grid-cols-2"
       >
-        <ProductArt name="Chef Angela Acioli" tone="#2f5640" ratio="4/5" />
+        <Photo
+          src={SITE_PHOTOS.chefAngela.url}
+          alt={SITE_PHOTOS.chefAngela.alt}
+          sizes="(min-width: 768px) 50vw, 100vw"
+        />
         <div className="flex flex-col gap-4">
           <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
             Quem cozinha

@@ -3,6 +3,10 @@
  * Só é usada quando o banco ainda não tem nenhum produto ativo.
  * Todo item sai com isDemo = true e a loja mostra o selo "DEMO".
  */
+import {
+  STATIC_COVERS,
+  STATIC_GALLERY,
+} from "@/modules/catalogo/static-photos";
 import { SALE_UNIT_LABEL } from "@/modules/catalogo/types";
 import type {
   StoreAllergen,
@@ -139,25 +143,66 @@ export const SEED_SECTIONS: StoreSection[] = [
   },
 ];
 
-/** Em qual categoria real cada produto de demonstração aparece. */
+/** Em qual categoria real cada produto de horta da demonstração aparece. */
 function categoryOf(p: Product): string {
-  if (p.unit === "horta") {
-    if (p.boxGroup === "frutas") return "frutas";
-    if (p.boxGroup === "raizes" || p.boxGroup === "legumes")
-      return "legumes-e-raizes";
-    return "verduras-e-folhas";
-  }
-  if (p.unit === "cozinha") return "refeicoes-individuais";
-  return p.slug.startsWith("blend") ? "blends-veganos" : "produtos-da-emkasa";
+  if (p.boxGroup === "frutas") return "frutas";
+  if (p.boxGroup === "raizes" || p.boxGroup === "legumes")
+    return "legumes-e-raizes";
+  return "verduras-e-folhas";
 }
 
 /**
- * Produtos com nome real informado pela Emkasa, mas sem ficha recebida:
- * o nome é o real e o resto fica vazio (nada de ingrediente inventado).
+ * Prévias de produtos reais: nome e foto vêm da Emkasa; preço, embalagem,
+ * ingredientes e alergênicos ainda não foram cadastrados, então ficam vazios.
+ * Quando o produto for cadastrado e ativado no painel, a prévia sai sozinha
+ * (a demonstração inteira some assim que houver produto ativo).
+ * [CONFIRMAR] a categoria das refeições e saladas com a Emkasa.
  */
-const REAL_NAMES: Record<string, string> = {
-  "farofa-nutritiva": "Farofa Nutritiva de Soja",
-};
+const PREVIEWS: {
+  slug: string;
+  name: string;
+  category: string;
+  storage?: Product["storage"];
+}[] = [
+  {
+    slug: "farofa-nutritiva-de-soja",
+    name: "Farofa Nutritiva de Soja",
+    category: "produtos-da-emkasa",
+  },
+  { slug: "blend-vegano", name: "Blend Vegano", category: "blends-veganos" },
+  { slug: "almondegas", name: "Almôndegas", category: "almondegas" },
+  { slug: "pate", name: "Patê", category: "produtos-da-emkasa" },
+  {
+    slug: "pao-integral",
+    name: "Pão integral",
+    category: "produtos-da-emkasa",
+  },
+  {
+    slug: "quiche-de-soja",
+    name: "Quiche de soja",
+    category: "refeicoes-individuais",
+  },
+  {
+    slug: "muqueca-de-grao-de-bico",
+    name: "Muqueca de grão-de-bico",
+    category: "refeicoes-individuais",
+  },
+  {
+    slug: "tomate-recheado-vegetariano",
+    name: "Tomate recheado vegetariano",
+    category: "refeicoes-individuais",
+  },
+  {
+    slug: "salada-margarita",
+    name: "Salada Margarita",
+    category: "refeicoes-individuais",
+  },
+  {
+    slug: "salada-no-pote",
+    name: "Salada no pote",
+    category: "refeicoes-individuais",
+  },
+];
 
 const ALLERGEN_GROUP: Record<string, string> = {
   gluten: "gluten",
@@ -184,55 +229,93 @@ export function demoCatalog(sections: StoreSection[]): StoreCatalog {
   }
 
   const products: StoreProduct[] = [];
-  for (const p of PRODUCTS) {
-    const found = lookup.get(categoryOf(p));
-    if (!found) continue; // categoria desativada no painel: some também da demo
-    const realName = REAL_NAMES[p.slug];
-    const sheet = !realName;
-    products.push({
-      slug: p.slug,
-      name: realName ?? p.name,
-      short: realName ? "Ficha técnica ainda não cadastrada." : p.short,
-      description: realName ? null : p.description,
+  const base = {
+    short: null,
+    description: null,
+    channel: "loja" as const,
+    quoteOnly: false,
+    conservation: null,
+    origin: null,
+    yieldInfo: null,
+    portions: null,
+    campaigns: [],
+    madeToOrder: false,
+    available: true,
+    inSeason: false,
+    isDemo: true,
+  };
+  const place = (category: string) => {
+    const found = lookup.get(category);
+    if (!found) return null; // categoria desativada no painel: some também da demo
+    return {
       sectionSlug: found.section.slug,
       sectionName: found.section.name,
-      categorySlug: categoryOf(p),
+      categorySlug: category,
       categoryName: found.name,
       path:
         found.section.name === found.name
           ? [found.name]
           : [found.section.name, found.name],
-      channel: "loja",
+    };
+  };
+
+  for (const item of PREVIEWS) {
+    const where = place(item.category);
+    if (!where) continue;
+    products.push({
+      ...base,
+      ...where,
+      slug: item.slug,
+      name: item.name,
+      saleUnit: "un",
+      unitLabel: "Embalagem a confirmar",
+      priceCents: null,
+      storage: item.storage ?? "ambiente",
+      ingredients: [],
+      contains: [],
+      mayContain: [],
+      blockedGroups: [],
+      allergensValidated: false,
+      diet: [],
+      cover: STATIC_COVERS[item.slug] ?? null,
+      gallery: STATIC_GALLERY[item.slug] ?? [],
+      tone: "#7a6a4f",
+      comingSoon: true,
+    });
+  }
+
+  // Horta: itens genéricos de demonstração (sem foto real ainda).
+  for (const p of PRODUCTS) {
+    if (p.unit !== "horta") continue;
+    const where = place(categoryOf(p));
+    if (!where) continue;
+    products.push({
+      ...base,
+      ...where,
+      slug: p.slug,
+      name: p.name,
+      short: p.short,
+      description: p.description,
       saleUnit: p.saleUnit,
       unitLabel: p.unitLabel || SALE_UNIT_LABEL[p.saleUnit],
       priceCents: p.priceCents,
-      quoteOnly: false,
       storage: p.storage,
-      conservation: sheet ? p.conservation : null,
-      origin: sheet ? (p.origin ?? null) : null,
-      yieldInfo: null,
-      portions: null,
-      ingredients: sheet ? p.ingredients : [],
-      contains: sheet ? toAllergens(p.contains) : [],
-      mayContain: sheet ? toAllergens(p.mayContain) : [],
-      blockedGroups: sheet
-        ? [
-            ...new Set(
-              [...p.contains, ...p.mayContain].map(
-                (c) => ALLERGEN_GROUP[c] ?? c,
-              ),
-            ),
-          ]
-        : [],
-      allergensValidated: sheet && p.allergensValidated,
-      diet: sheet ? p.diet.map((d) => ({ code: d, name: DIET_LABEL[d] })) : [],
-      campaigns: [],
-      madeToOrder: Boolean(p.madeToOrder),
-      available: true,
-      inSeason: false,
+      conservation: p.conservation,
+      origin: p.origin ?? null,
+      ingredients: p.ingredients,
+      contains: toAllergens(p.contains),
+      mayContain: toAllergens(p.mayContain),
+      blockedGroups: [
+        ...new Set(
+          [...p.contains, ...p.mayContain].map((c) => ALLERGEN_GROUP[c] ?? c),
+        ),
+      ],
+      allergensValidated: p.allergensValidated,
+      diet: p.diet.map((d) => ({ code: d, name: DIET_LABEL[d] })),
       cover: null,
+      gallery: [],
       tone: p.tone,
-      isDemo: true,
+      comingSoon: false,
     });
   }
   return { source: "demo", products, sections, whatsapp: null };

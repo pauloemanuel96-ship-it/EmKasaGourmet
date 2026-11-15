@@ -328,3 +328,60 @@ describe("loja", () => {
     );
   });
 });
+
+describe("fotos reais", () => {
+  it("produto real com o slug da foto ganha a foto; foto do painel tem prioridade", async () => {
+    const { toStoreProduct } = await import("@/modules/catalogo/store-mapping");
+    const row = {
+      slug: "farofa-nutritiva-de-soja",
+      name: "Farofa Nutritiva de Soja",
+      sale_unit: "pote",
+      unit_size: null,
+      cover: null,
+      path_names: [],
+    } as unknown as Parameters<typeof toStoreProduct>[0];
+    expect(toStoreProduct(row, "https://x.supabase.co").cover?.url).toBe(
+      "/fotos/farofa-nutritiva-de-soja.webp",
+    );
+    const withDb = { ...row, cover: { path: "a/b.webp", alt: "x" } };
+    expect(toStoreProduct(withDb, "https://x.supabase.co").cover?.url).toBe(
+      "https://x.supabase.co/storage/v1/object/public/produtos/a/b.webp",
+    );
+  });
+
+  it("demonstração: Blend Vegano com foto e sem embalagem inventada", async () => {
+    const { demoCatalog, SEED_SECTIONS } = await import("@/demo/store-catalog");
+    const { products } = demoCatalog(SEED_SECTIONS);
+    const blend = products.find((p) => p.name === "Blend Vegano");
+    expect(blend).toMatchObject({
+      unitLabel: "Embalagem a confirmar",
+      cover: { url: "/fotos/blend-vegano.webp" },
+      ingredients: [],
+      categorySlug: "blends-veganos",
+    });
+    expect(products.some((p) => p.slug === "blend-golden")).toBe(false);
+  });
+});
+
+describe("prévias de produtos reais", () => {
+  it("nome e foto reais, sem preço nem ficha inventados; refeições fictícias saíram", async () => {
+    const { demoCatalog, SEED_SECTIONS } = await import("@/demo/store-catalog");
+    const { products } = demoCatalog(SEED_SECTIONS);
+    const previews = products.filter((p) => p.comingSoon);
+    expect(previews.map((p) => p.slug)).toContain("quiche-de-soja");
+    expect(
+      previews.every((p) => p.priceCents === null && p.cover !== null),
+    ).toBe(true);
+    expect(
+      previews.every(
+        (p) => p.ingredients.length === 0 && !p.allergensValidated,
+      ),
+    ).toBe(true);
+    expect(
+      products.find((p) => p.slug === "farofa-nutritiva-de-soja")?.gallery,
+    ).toHaveLength(2);
+    expect(products.some((p) => p.slug === "lasanha-vegana-berinjela")).toBe(
+      false,
+    );
+  });
+});

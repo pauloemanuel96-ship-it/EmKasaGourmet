@@ -39,10 +39,16 @@ export type StoreProduct = {
   available: boolean;
   inSeason: boolean;
   cover: { url: string; alt: string } | null;
+  gallery: { url: string; alt: string }[];
   /** Cor da ilustração enquanto não há foto. */
   tone: string;
   /** Dado de demonstração: nunca é um produto à venda. */
   isDemo: boolean;
+  /**
+   * Prévia de produto real (nome e foto reais) que ainda não tem preço nem
+   * ficha no banco: aparece como "Em breve", sem carrinho.
+   */
+  comingSoon: boolean;
 };
 
 export type StoreCategory = {

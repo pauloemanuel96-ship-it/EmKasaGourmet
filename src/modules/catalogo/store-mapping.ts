@@ -1,4 +1,5 @@
 /** Converte as linhas das views públicas no formato da loja. Sem servidor: testável. */
+import { STATIC_COVERS, STATIC_GALLERY } from "./static-photos";
 import type { StoreAllergen, StoreProduct, StoreSection } from "./store-types";
 import { SALE_UNIT_LABEL, type SaleUnit, type StorageKind } from "./types";
 
@@ -146,8 +147,10 @@ export function toStoreProduct(
           url: `${supabaseUrl}/storage/v1/object/public/${PHOTO_BUCKET}/${row.cover.path}`,
           alt: row.cover.alt,
         }
-      : null,
+      : (STATIC_COVERS[row.slug] ?? null),
+    gallery: STATIC_GALLERY[row.slug] ?? [],
     tone: toneOf(row.slug),
     isDemo: false,
+    comingSoon: false,
   };
 }

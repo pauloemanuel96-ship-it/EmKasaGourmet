@@ -7,8 +7,8 @@ export async function DemoBanner() {
     <div className="bg-forest-900 text-cream-50 px-4 py-2 text-center text-xs">
       {source === "demo" ? (
         <>
-          Loja em <strong>demonstração</strong>: itens com selo DEMO não estão à
-          venda. Nenhum pagamento é cobrado.
+          Loja em <strong>demonstração</strong>: itens com selo DEMO ou EM BREVE
+          ainda não estão à venda. Nenhum pagamento é cobrado.
         </>
       ) : (
         <>

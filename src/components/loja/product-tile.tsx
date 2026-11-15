@@ -12,7 +12,11 @@ export function ProductTile({ product }: { product: StoreProduct }) {
   // demo mexe neles). Produto real usa o que veio do banco.
   const demoPrice = useDemo((s) => priceOf(s, product.slug));
   const demoAvailable = useDemo((s) => availableOf(s, product.slug));
-  const price = product.isDemo ? demoPrice : product.priceCents;
+  const price = product.comingSoon
+    ? null
+    : product.isDemo
+      ? demoPrice
+      : product.priceCents;
   const soldOut = product.isDemo ? demoAvailable === 0 : !product.available;
 
   return (
@@ -25,7 +29,12 @@ export function ProductTile({ product }: { product: StoreProduct }) {
           product={product}
           className={`transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-lg ${soldOut ? "opacity-55 grayscale-[35%]" : ""}`}
         />
-        {product.isDemo && <DemoTag className="absolute top-3 left-3" />}
+        {product.isDemo && (
+          <DemoTag
+            soon={product.comingSoon}
+            className="absolute top-3 left-3"
+          />
+        )}
         {soldOut ? (
           <span className="bg-ink-900/80 absolute bottom-3 left-3 rounded px-2 py-1 text-xs font-medium text-white">
             Esgotado
@@ -50,8 +59,10 @@ export function ProductTile({ product }: { product: StoreProduct }) {
             ? formatCents(price)
             : product.quoteOnly
               ? "Sob orçamento"
-              : ""}
-          {product.isDemo && price !== null && (
+              : product.comingSoon
+                ? "Preço a definir"
+                : ""}
+          {product.isDemo && !product.comingSoon && price !== null && (
             <span className="text-ink-600 ml-1 text-xs font-normal">
               (demo)
             </span>
