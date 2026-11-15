@@ -61,3 +61,14 @@ Manifest + ícones no MVP. App nas lojas só quando houver motivo (notificaçõe
 
 ## D-013 — "BOX orgânicos" renomeado para "BOX da Horta" · **Proposta**
 Até a validação da certificação dos produtores (SECURITY_AND_PRIVACY §6).
+
+## D-014 — Fontes self-hosted · **Aceita**
+Fraunces e Inter via pacotes `@fontsource-variable/*` carregados com `next/font/local`.
+**Por quê:** o build não depende de acesso ao Google Fonts, nenhum dado do visitante vai para o Google (LGPD) e o resultado é o mesmo do `next/font/google`.
+
+## D-015 — npm em vez de pnpm · **Aceita**
+O Paulo já usa npm no Windows (`npm.cmd`). Uma ferramenta a menos para instalar. Substitui a menção a pnpm na versão inicial dos documentos.
+
+## D-016 — Visibilidade do repositório · **Proposta**
+O repositório `EmKasaGourmet` está **público**. Hoje não há segredos nele, mas os documentos expõem a estratégia do negócio e o schema do banco.
+**Recomendação:** torná-lo privado (Settings → General → Danger Zone → Change visibility). Não afeta CI nem deploy.

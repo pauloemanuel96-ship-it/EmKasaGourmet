@@ -13,7 +13,7 @@ Visão de grande negócio, com o **menor custo e a menor complexidade operaciona
 Na dúvida entre duas soluções, escolha a mais simples de operar pela Chef Angela.
 
 ## Stack (ver DECISIONS.md)
-Next.js (App Router) + TypeScript estrito · Tailwind CSS + shadcn/ui · Supabase (Postgres, Auth, Storage, RLS)
+Next.js 16 (App Router) + TypeScript estrito · Tailwind CSS + shadcn/ui · Supabase (Postgres, Auth, Storage, RLS)
 · Mercado Pago (Checkout Pro) · Claude API (assistente operacional, Fase 3) · PWA.
 Hospedagem: desenvolvimento na Vercel Hobby, e produção conforme a D-003. n8n e Capacitor ficam fora do MVP.
 
@@ -39,7 +39,9 @@ BOX, assinaturas, Minha Casa, Escola, Clube e Parceiros são **apenas modelados*
 ## Como trabalhar
 - Um módulo por vez. Antes de codar, confirme qual tarefa do sprint está em andamento.
 - Antes de adicionar dependência: justifique em DECISIONS.md. Prefira o que Next/Supabase já resolvem.
-- Ao concluir uma funcionalidade: `pnpm typecheck && pnpm lint && pnpm test`, conferir mobile (360px),
+- **Next.js 16 tem mudanças incompatíveis com versões antigas.** Leia `AGENTS.md` e consulte `node_modules/next/dist/docs/` antes de usar uma API do Next.
+- Gerenciador de pacotes: **npm** (Node 22+). Fontes são self-hosted via `next/font/local` + `@fontsource-variable`.
+- Ao concluir uma funcionalidade: `npm run lint && npm run typecheck && npm test && npm run build`, conferir mobile (360px),
   conferir acessibilidade (teclado, contraste, labels) e atualizar a documentação afetada.
 - Commits pequenos, por funcionalidade, em português: `feat(catalogo): ...`, `fix(estoque): ...`.
 - Migrations SQL versionadas em `supabase/migrations`. Nunca alterar migration já aplicada.

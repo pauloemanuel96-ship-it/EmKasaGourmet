@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/*
+ * Tokens provisórios do DESIGN_SYSTEM.md (v0.1).
+ * Revisar quando a identidade definitiva da Emkasa for aprovada.
+ */
+@theme {
+  --color-forest-900: #1f3a2b;
+  --color-forest-700: #2f5640;
+  --color-leaf-500: #6e8f5a;
+  --color-cream-50: #faf6ee;
+  --color-sand-200: #eadfcb;
+  --color-terracotta-500: #b8613d;
+  --color-ink-900: #1c1b18;
+  --color-ink-600: #5a5650;
+  --color-danger-600: #b42318;
+  --color-warning-600: #b54708;
+
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --radius-control: 6px;
+  --radius-media: 12px;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-cream-50);
+    color: var(--color-ink-900);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    color: var(--color-forest-900);
+    line-height: 1.15;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-forest-700);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

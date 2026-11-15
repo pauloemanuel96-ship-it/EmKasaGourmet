@@ -51,8 +51,8 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 
 | # | Tarefa | Saída verificável |
 |---|---|---|
-| 1 | Criar app Next.js + TS strict + Tailwind + shadcn/ui + ESLint/Prettier + Vitest | `pnpm dev` e `pnpm test` ok |
-| 2 | GitHub Actions: lint, typecheck, test | CI verde no PR |
+| 1 | ✅ Criar app Next.js 16 + TS strict + Tailwind 4 + ESLint/Prettier + Vitest (shadcn/ui entra junto com o primeiro componente do painel) | `npm run dev` e `npm test` ok |
+| 2 | ✅ GitHub Actions: lint, typecheck, format, test, build | CI verde no PR |
 | 3 | Supabase CLI local + projeto remoto; `.env.example` | conexão nos dois ambientes |
 | 4 | Migration 001: enums, `categories`, `producers`, `locations`, `products`, `product_media` | tabelas + RLS (leitura pública só de `active`) |
 | 5 | Migration 002: `allergens`, `ingredients`, ligações, trigger de alergênicos por ingrediente | teste pgTAP do trigger |

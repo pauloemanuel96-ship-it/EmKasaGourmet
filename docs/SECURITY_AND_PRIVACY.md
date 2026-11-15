@@ -63,7 +63,7 @@ A produção orgânica tem regras próprias do MAPA. Venda direta por agricultor
 - Validação Zod no servidor em toda entrada; limites de tamanho e tipo no upload de imagens (apenas imagens, ≤ 5 MB, reprocessadas).
 - Cabeçalhos: CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, HSTS.
 - Rate limit em: checkout, acompanhar pedido, login, assistente.
-- Dependências: Dependabot + `pnpm audit` no CI.
+- Dependências: Dependabot + `npm audit` no CI.
 - Segredos em variáveis de ambiente do provedor; `.env*` no `.gitignore`; rotação se houver vazamento.
 - Skills e scripts de terceiros no Claude Code: instalar só de fontes conhecidas e ler antes (ver DECISIONS D-010).
 

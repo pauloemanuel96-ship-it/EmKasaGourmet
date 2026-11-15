@@ -3,7 +3,7 @@
 Plataforma digital da Emkasa Gourmet: loja (horta, cozinha, produtos próprios), painel operacional da Chef Angela
 e base para BOX, assinaturas, Escola e Clube.
 
-> **Status:** Fase 0, a fundação documental. Ainda não há código de aplicação.
+> **Status:** Sprint 1 em andamento. Tarefas 1 (estrutura do app) e 2 (CI) concluídas.
 
 ## Documentação
 | Arquivo | Conteúdo |
@@ -58,9 +58,14 @@ emkasa-gourmet/
 ```
 
 ## Desenvolvimento (Sprint 1 em diante)
+Requisito: Node.js 22 ou superior.
+
 ```bash
-pnpm install
-supabase start          # banco local (Docker)
-pnpm dev
-pnpm test
+npm install
+npm run dev          # http://localhost:3000
+npm test
+npm run lint
+npm run typecheck
 ```
+
+O banco local (Supabase CLI) entra na tarefa 3.
