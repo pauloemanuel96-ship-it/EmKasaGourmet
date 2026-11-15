@@ -58,7 +58,7 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 | 5 | ✅ Alergênicos, ingredientes (com derivados), trigger e invalidação; regra do "orgânico" | testes em `tests/db` |
 | 6 | ✅ Migration 0003: livro-razão, saldos, `register_stock_movement`, `v_product_availability` | teste: saldo nunca negativo |
 | 7 | ✅ `staff_roles`, `has_role()`, `audit_log`, `settings` (na 0001) + dados de referência (0004) | teste de RLS por papel |
-| 8 | Auth do painel (magic link) + middleware de proteção `/admin` | usuário sem papel recebe 403 |
+| 8 | ✅ Auth do painel (link mágico, sem cadastro aberto) + `proxy.ts` + checagem de papel no servidor | usuário sem papel vê "Sem acesso" |
 | 9 | Tokens do DESIGN_SYSTEM no Tailwind, fontes via `next/font`, layout base da loja e do painel | página de estilo `/dev/ui` (apenas em dev) |
 | 10 | Painel: lista e formulário de produto (sem fotos ainda) | criar/editar produto com auditoria |
 | 11 | Loja: catálogo e página de produto lendo do banco | navegável no celular |

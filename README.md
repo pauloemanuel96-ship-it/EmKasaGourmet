@@ -68,4 +68,18 @@ npm run lint
 npm run typecheck
 ```
 
-Banco: as migrations ficam em `supabase/migrations` e são aplicadas no projeto remoto com `npx supabase db push` (ver docs/ROADMAP.md).
+## Primeiro acesso ao painel
+
+1. Supabase → **Authentication → Sign In / Providers**: desligue *Allow new users to sign up* (o painel não tem cadastro aberto).
+2. Supabase → **Authentication → URL Configuration**: *Site URL* = endereço do site; em *Redirect URLs* inclua `http://localhost:3000/auth/callback` (e o endereço de produção quando houver).
+3. Supabase → **Authentication → Users → Add user → Create new user**: e-mail da pessoa, marque *Auto Confirm User*.
+4. Supabase → **SQL Editor**: dar o papel (troque o e-mail):
+   ```sql
+   insert into public.staff_roles (user_id, role)
+   select id, 'owner' from auth.users where email = 'email@exemplo.com';
+   ```
+5. Acesse `/admin/login`, informe o e-mail e abra o link **no mesmo navegador**.
+
+Papéis: `owner`, `admin`, `operacao`, `atendimento` (ver docs/SECURITY_AND_PRIVACY.md §1).
+
+Banco: as migrations ficam em `supabase/migrations` e são aplicadas no projeto remoto com `npx supabase db push --remote` (ver docs/ROADMAP.md).

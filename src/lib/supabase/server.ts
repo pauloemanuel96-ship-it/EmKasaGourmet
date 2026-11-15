@@ -8,8 +8,10 @@ import { publicEnv } from "@/lib/env";
  * Usa a chave publicável + a sessão do usuário (cookies): o RLS decide o acesso.
  */
 export async function createClient() {
-  const env = publicEnv();
+  // cookies() primeiro: no build (prerender) a rota é adiada aqui e as
+  // variáveis de ambiente só são exigidas em tempo de requisição.
   const cookieStore = await cookies();
+  const env = publicEnv();
 
   return createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
