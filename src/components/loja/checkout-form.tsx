@@ -76,7 +76,7 @@ export function CheckoutForm() {
             <input
               name="nome"
               autoComplete="name"
-              className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3 text-base font-normal"
+              className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-base font-normal"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-medium">
@@ -87,7 +87,7 @@ export function CheckoutForm() {
               inputMode="tel"
               autoComplete="tel"
               placeholder="(79) 9 9999-9999"
-              className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3 text-base font-normal"
+              className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-base font-normal"
             />
           </label>
         </fieldset>
@@ -99,7 +99,7 @@ export function CheckoutForm() {
           {DELIVERY_ZONES.map((z) => (
             <label
               key={z.id}
-              className="border-sand-200 flex min-h-11 items-center justify-between gap-3 rounded-(--radius-control) border bg-white px-4 text-sm"
+              className="border-sand-200 bg-paper flex min-h-11 items-center justify-between gap-3 rounded-(--radius-control) border px-4 text-sm"
             >
               <span className="flex items-center gap-2">
                 <input
@@ -141,7 +141,7 @@ export function CheckoutForm() {
           {(["pix", "cartao"] as const).map((m) => (
             <label
               key={m}
-              className="border-sand-200 flex min-h-11 items-center gap-2 rounded-(--radius-control) border bg-white px-4 text-sm"
+              className="border-sand-200 bg-paper flex min-h-11 items-center gap-2 rounded-(--radius-control) border px-4 text-sm"
             >
               <input
                 type="radio"
@@ -168,7 +168,7 @@ export function CheckoutForm() {
         </fieldset>
       </div>
 
-      <aside className="flex h-fit flex-col gap-3 rounded-(--radius-media) bg-white p-5 text-sm md:sticky md:top-24">
+      <aside className="bg-paper flex h-fit flex-col gap-3 rounded-(--radius-media) p-5 text-sm md:sticky md:top-24">
         <p className="text-forest-900 font-serif text-xl">Resumo</p>
         <ul className="flex flex-col gap-1">
           {lines.map((l) => (
@@ -187,7 +187,7 @@ export function CheckoutForm() {
           </span>
         </div>
         {discount > 0 && (
-          <div className="text-leaf-500 flex justify-between">
+          <div className="text-leaf-700 flex justify-between">
             <span>Clube</span>
             <span>– {formatCents(discount)}</span>
           </div>

@@ -91,7 +91,7 @@ export function Catalog() {
             defaultValue={busca}
             placeholder="couve, lasanha, farofa…"
             onChange={(e) => update({ q: e.target.value })}
-            className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3"
+            className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3"
           />
         </div>
 
@@ -142,7 +142,7 @@ export function Catalog() {
           <select
             value={dieta ?? ""}
             onChange={(e) => update({ dieta: e.target.value || null })}
-            className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3 text-sm"
+            className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-sm"
           >
             <option value="">Qualquer</option>
             {(Object.keys(DIET_LABEL) as DietLabel[]).map((d) => (

@@ -23,7 +23,7 @@ export default async function ReceitaPage({
   if (!r) notFound();
   return (
     <main className="mx-auto max-w-3xl px-4 pt-10 sm:px-6">
-      <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+      <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
         {r.minutes} min · {r.servings} porções
       </p>
       <h1 className="mb-6 text-4xl">{r.title}</h1>

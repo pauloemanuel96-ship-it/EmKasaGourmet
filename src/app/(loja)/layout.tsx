@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { BottomNav } from "@/components/loja/bottom-nav";
 import { DemoBanner } from "@/components/loja/demo-banner";
 import { SiteFooter } from "@/components/loja/site-footer";
 import { SiteHeader } from "@/components/loja/site-header";
@@ -14,6 +15,11 @@ export default function LojaLayout({ children }: LayoutProps<"/">) {
       </Suspense>
       <div className="flex-1">{children}</div>
       <SiteFooter />
+      {/* Espaço para a barra inferior não cobrir o fim da página no celular. */}
+      <div aria-hidden="true" className="pb-safe h-16 md:hidden" />
+      <Suspense fallback={null}>
+        <BottomNav />
+      </Suspense>
     </>
   );
 }

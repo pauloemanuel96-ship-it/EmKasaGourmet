@@ -16,7 +16,8 @@
 - ⚪ Fornecedores e produtores parceiros; certificações.
 
 ## Marca e conteúdo
-- 🔴 Logo em vetor (SVG/PDF/AI), cores e fontes atuais, se existirem.
+- ✅ Logo recebido em 15/11/2026 (PNG e PSD) e aplicado nos ícones do app. 🟠 Ainda falta a versão em **vetor** (SVG/AI/PDF) para impressão e tamanhos grandes.
+- 🟠 Fonte do logo (Diavlo): a licença não permite servir o arquivo no site (D-024). Se quiserem a fonte nos títulos, pedir autorização ao autor.
 - 🔴 Fotos reais de produtos, pratos, horta e da Chef (mesmo de celular, desde que com boa luz).
 - 🟠 Texto "Sobre / história da Chef Angela", aprovado por ela.
 - 🟠 Depoimentos reais com autorização de uso.

@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { cartCount, useDemo } from "@/demo/store";
 
 const NAV = [
@@ -16,13 +16,24 @@ const NAV = [
 export function SiteHeader() {
   const count = useDemo(cartCount);
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
   return (
     <header className="border-sand-200 bg-cream-50/95 sticky top-0 z-30 border-b backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="text-forest-900 font-serif text-xl">
-          Emkasa <span className="text-leaf-500">Gourmet</span>
+        <Link
+          href="/"
+          className="text-forest-900 flex min-h-11 items-center gap-2 font-serif text-lg whitespace-nowrap sm:text-xl"
+        >
+          <Image
+            src="/icons/mark-96.png"
+            alt=""
+            width={36}
+            height={36}
+            priority
+          />
+          <span>
+            emKasa <span className="text-leaf-700">Gourmet</span>
+          </span>
         </Link>
 
         <nav
@@ -50,7 +61,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/carrinho"
-            className="bg-forest-900 text-cream-50 hover:bg-forest-700 flex min-h-11 items-center gap-2 rounded-(--radius-control) px-4 text-sm font-medium"
+            className="bg-forest-900 text-cream-50 hover:bg-forest-700 flex min-h-11 items-center gap-2 rounded-(--radius-control) px-3 text-sm font-medium sm:px-4"
           >
             Carrinho
             <span
@@ -60,35 +71,8 @@ export function SiteHeader() {
               {count}
             </span>
           </Link>
-          <button
-            type="button"
-            className="text-forest-900 min-h-11 rounded-(--radius-control) px-3 text-sm font-medium md:hidden"
-            aria-expanded={open}
-            aria-controls="menu-mobile"
-            onClick={() => setOpen((o) => !o)}
-          >
-            Menu
-          </button>
         </div>
       </div>
-      {open && (
-        <nav
-          id="menu-mobile"
-          aria-label="Principal"
-          className="border-sand-200 border-t px-4 pb-3 md:hidden"
-        >
-          {[...NAV, { href: "/minha-casa", label: "Minha Casa" }].map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              onClick={() => setOpen(false)}
-              className="text-forest-900 block py-3 text-base font-medium"
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-      )}
     </header>
   );
 }

@@ -32,7 +32,7 @@ export function LoginForm() {
           required
           aria-invalid={state.status === "error"}
           aria-describedby={state.status === "error" ? "email-erro" : undefined}
-          className="border-ink-600/40 min-h-11 rounded-(--radius-control) border bg-white px-3 text-base"
+          className="border-ink-600/40 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-base"
         />
         {state.status === "error" && (
           <p id="email-erro" className="text-danger-600 text-sm">

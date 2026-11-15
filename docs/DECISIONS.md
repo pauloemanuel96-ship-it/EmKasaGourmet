@@ -85,3 +85,20 @@ O projeto `zzyrperrbmbcnrtrcmkm` foi criado em East US (Ohio): o plano gratuito 
 
 ## D-020 — Protótipo navegável com dados fictícios · **Aceita**
 `src/demo/*` simula catálogo, estoque, pedidos, BOX, assinatura, clube e o assistente, com estado no navegador (localStorage). As regras puras (`src/demo/logic.ts`) têm testes e servem de especificação para a versão real. Cada módulo será trocado pelo Supabase, um de cada vez, e `src/demo` some ao final.
+
+## D-021 — Plano alimentar pode ir à Claude API, com salvaguardas · **Aceita (Paulo, 15/11/2026)**
+Altera o SECURITY_AND_PRIVACY §3. Para a funcionalidade "Envie seu plano", o **arquivo** do plano (foto ou PDF) pode ser enviado à Claude API quando o titular dá consentimento específico para essa finalidade.
+**Condições:** vai só o arquivo, sem nome, telefone ou endereço; modelo Sonnet (não Fable, que exige retenção de 30 dias); pedir retenção zero à Anthropic se a conta for elegível; a IA só transcreve e propõe itens, o cliente confirma um a um e só então as regras determinísticas do banco passam a filtrar; o arquivo original é apagado após a confirmação, salvo pedido do cliente; Anthropic listada como operadora na política de privacidade.
+**Pendente antes de construir:** validação jurídica do termo de consentimento e da transferência internacional. Perfis de saúde e contatos continuam **fora** de qualquer prompt.
+
+## D-022 — Ordem do roadmap revisada · **Aceita (Paulo, 15/11/2026)**
+Vender primeiro; IA e saúde depois. Ordem: (1) fundação visual + PWA, (2) catálogo real + painel, (3) tela Hoje, (4) pedidos + entregas + Mercado Pago, (5) conta do cliente, políticas, backup e MFA → lançamento; depois Minha Casa, Envie seu plano, BOX e assinatura, notificações, assistente com IA, rastreabilidade, indicação e planejador. Detalhe no ROADMAP.
+
+## D-023 — Direção visual: "Caderno da Chef" com navegação de app · **Aceita (Paulo, 15/11/2026)**
+Editorial nas telas de conteúdo (serifada grande, papel creme, foto real) e gramática de app nas telas de compra (barra inferior no celular, listas, alvos de 44 px). Modo escuro opcional: o padrão é claro e a escolha fica no aparelho. O modo escuro troca os **valores** dos tokens em `[data-theme="dark"]`, sem classes `dark:` nos componentes.
+
+## D-024 — Fonte do logo (Diavlo) não é servida pelo site · **Aceita**
+A licença que veio com o logo permite uso comercial e incorporação em arquivos, mas **proíbe distribuir o arquivo da fonte online** sem autorização do autor (Jos Buivenga, exljbris). Servir a fonte como webfont é distribuí-la. O logotipo entra como imagem; títulos seguem em Fraunces. Reavaliar só com autorização por escrito do autor.
+
+## D-025 — Nutricionistas parceiras sem comissão por produto · **Proposta (validar com CRN e advogado)**
+O Código de Ética do CFN (Resolução 856/2026), segundo o resumo consultado, veda vincular marca à prescrição individual e receber vantagens de empresas do setor. Modelo de receita: mensalidade da profissional pela agenda ou assinatura premium do cliente. O plano cita alimentos, não produtos; o cruzamento com o catálogo é da plataforma, por regra determinística.

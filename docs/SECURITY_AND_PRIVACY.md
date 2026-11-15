@@ -18,6 +18,7 @@
 ## 2. Row Level Security
 - RLS **ligado em todas as tabelas**, com teste automatizado que falha se alguma tabela de `public` estiver sem RLS.
 - Leitura pública (`anon`) apenas de: `products` com `status='active'`, mídia, categorias, alergênicos, rótulos aprovados, zonas ativas e receitas publicadas.
+- Produtores: o visitante lê só a view `v_public_producers` (nome, tipo, cidade e selo válido). Estoque: o visitante lê só `is_available`; a quantidade aparece apenas para a equipe (migration 0005).
 - `orders`/`customers`: sem acesso `anon` direto. Criação via `create_order` (security definer, com validação interna). Consulta pública só via `tracking_token` + telefone, por função.
 - `inventory_movements` e `audit_log`: append-only.
 - `service_role` só em Route Handlers/Server Actions e no webhook. Nunca em código de cliente.
@@ -34,7 +35,7 @@
 - Página de privacidade + canal do titular (e-mail) para acesso, correção e exclusão.
 - Exclusão de cliente: anonimizar `customers` e manter `orders` com dados fiscais mínimos.
 - Operadores (Supabase, hospedagem, Mercado Pago, Anthropic): listar na política. Verificar a região do projeto Supabase (preferir São Paulo, `sa-east-1`).
-- **Nunca enviar dados de saúde ou contato de clientes para a Claude API.** O assistente operacional (F3) trabalha com catálogo e estoque; o de atendimento (F6) recebe apenas o necessário e é revisado separadamente.
+- **Perfis de saúde e contatos de clientes nunca vão para a Claude API.** Única exceção, pela D-021: o arquivo do plano alimentar enviado pelo próprio titular, com consentimento específico e as condições daquela decisão. O assistente operacional trabalha com catálogo e estoque; o de atendimento recebe apenas o necessário e é revisado separadamente.
 
 ## 4. Alergênicos e segurança alimentar
 1. Alergênicos derivam de ingredientes cadastrados (trigger) + declaração manual de contaminação cruzada.

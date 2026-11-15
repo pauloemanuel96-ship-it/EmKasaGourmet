@@ -253,6 +253,41 @@ describe("Estoque (livro-razão)", () => {
     expect(rows).toEqual([{ product_id: activeProductId, is_available: true }]);
     expect(rows.find((r) => r.product_id === draftProductId)).toBeUndefined();
   });
+
+  it("visitante não lê o saldo: nem a tabela, nem a quantidade na view", async () => {
+    await expect(
+      as(db, { anon: true }, () =>
+        db.query("select * from public.stock_levels"),
+      ),
+    ).rejects.toThrow(/permission denied/);
+
+    const anonRows = await as(
+      db,
+      { anon: true },
+      async () =>
+        (
+          await db.query<{ available_quantity: string | null }>(
+            "select available_quantity from public.v_product_availability",
+          )
+        ).rows,
+    );
+    expect(anonRows.every((r) => r.available_quantity === null)).toBe(true);
+
+    const staffRows = await as(
+      db,
+      { userId: OPERACAO },
+      async () =>
+        (
+          await db.query<{ product_id: string; available_quantity: string }>(
+            "select product_id, available_quantity from public.v_product_availability",
+          )
+        ).rows,
+    );
+    const ids = staffRows.map((r) => r.product_id);
+    expect(ids).toContain(activeProductId);
+    expect(ids).toContain(draftProductId);
+    expect(staffRows.every((r) => r.available_quantity !== null)).toBe(true);
+  });
 });
 
 describe("Alergênicos (determinísticos)", () => {
@@ -312,6 +347,45 @@ describe("Regras de catálogo", () => {
          values ('demo-alface', '[DEMO] Alface Orgânica', 'horta', 'maco')`,
       ),
     ).rejects.toThrow(/orgânico/);
+  });
+
+  it("visitante vê só dados públicos de produtores com produto ativo", async () => {
+    const { id: comProduto } = await one<{ id: string }>(
+      `insert into public.producers (name, kind, city, notes)
+       values ('[DEMO] Sítio A', 'fornecedor', '[DEMO] Cidade', 'observação interna') returning id`,
+    );
+    await db.query(
+      `insert into public.producers (name, kind, notes)
+       values ('[DEMO] Sítio sem produto', 'fornecedor', 'observação interna')`,
+    );
+    await db.query(
+      "update public.products set producer_id = $1 where id = $2",
+      [comProduto, activeProductId],
+    );
+
+    await expect(
+      as(db, { anon: true }, () => db.query("select * from public.producers")),
+    ).rejects.toThrow(/permission denied/);
+
+    const rows = await as(
+      db,
+      { anon: true },
+      async () =>
+        (
+          await db.query<Record<string, unknown>>(
+            "select * from public.v_public_producers",
+          )
+        ).rows,
+    );
+    expect(rows).toEqual([
+      {
+        id: comProduto,
+        name: "[DEMO] Sítio A",
+        kind: "fornecedor",
+        city: "[DEMO] Cidade",
+        organic_certified: false,
+      },
+    ]);
   });
 
   it("produto ativo exige preço (não inventamos preço)", async () => {

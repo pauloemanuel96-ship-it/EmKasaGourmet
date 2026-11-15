@@ -18,6 +18,15 @@
 ### Decisão de prioridade (e o que mudou em relação ao briefing)
 O briefing colocava a interface conversacional no MVP. **Recomendo a Fase 3**, com uma substituta melhor no MVP: a tela **"Hoje"** (RF-A02), que resolve 80% da atualização diária com toques, sem custo de IA e sem risco de interpretação errada. O assistente entra quando o fluxo real de pedidos já estiver estável, para que ele opere sobre dados de verdade. A arquitetura dele já está pronta (SYSTEM_ARCHITECTURE §4.3).
 
+### Revisão de 15/11/2026 (D-022)
+A ordem abaixo substitui a tabela acima onde houver conflito. Critério de passagem igual: a Chef usa sozinha por uma semana.
+
+| Etapa | Módulos, na ordem |
+|---|---|
+| **Agora: vender de verdade** | 1. ✅ Fundação visual, PWA e correções de exposição de dados · 2. Catálogo e produto lendo do banco + cadastro no painel · 3. Tela "Hoje" real · 4. Pedidos, entregas e Mercado Pago · 5. Conta do cliente, políticas, backup e MFA → **LANÇAMENTO** |
+| **3 meses: a casa e o cuidado** | 6. Minha Casa real (perfis, consentimento) · 7. Envie seu plano (D-021) · 8. BOX e assinatura com janela de edição · 9. Push do PWA e WhatsApp de status · 10. Assistente da Chef com IA no painel · 11. Lote, colheita e QR · 12. Indicação · 13. Planejador por regras |
+| **Visão** | Nutricionistas parceiras (D-025) · Escola em vídeo · B2B · Clube · Assistente no WhatsApp e atendimento · Foto de despensa e de prato |
+
 ## Critérios de conclusão
 
 ### Fase 0
@@ -53,7 +62,7 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 |---|---|---|
 | 1 | ✅ Criar app Next.js 16 + TS strict + Tailwind 4 + ESLint/Prettier + Vitest (shadcn/ui entra junto com o primeiro componente do painel) | `npm run dev` e `npm test` ok |
 | 2 | ✅ GitHub Actions: lint, typecheck, format, test, build | CI verde no PR |
-| 3 | ✅ Supabase CLI + projeto remoto (`zzyrperrbmbcnrtrcmkm`, São Paulo); clientes server/browser; `.env.example` | `db push` aplicado |
+| 3 | ✅ Supabase CLI + projeto remoto (`zzyrperrbmbcnrtrcmkm`, East US: ver D-019); clientes server/browser; `.env.example` | `db push` aplicado |
 | 4 | ✅ Migrations 0001–0002: base, catálogo, mídia | tabelas + RLS (leitura pública só de `active`) |
 | 5 | ✅ Alergênicos, ingredientes (com derivados), trigger e invalidação; regra do "orgânico" | testes em `tests/db` |
 | 6 | ✅ Migration 0003: livro-razão, saldos, `register_stock_movement`, `v_product_availability` | teste: saldo nunca negativo |

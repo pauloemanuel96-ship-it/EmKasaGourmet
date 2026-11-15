@@ -31,6 +31,7 @@ courses ──< lessons · enrollments · partners · loyalty_ledger (🔜F6)
 
 ### `producers`
 `id, name, kind (proprio|fornecedor|parceiro), city, certification (none|ocs|certificado_auditoria|certificado_participativo), certification_ref, certification_valid_until, notes`
+> Visitante não lê esta tabela: lê a view `v_public_producers` (`id, name, kind, city, organic_certified`), só de produtores com produto ativo.
 > A certificação é do **produtor**, não do produto. O selo "orgânico" só é exibido via regra (ver SECURITY_AND_PRIVACY §6).
 
 ### `products`
@@ -57,7 +58,7 @@ courses ──< lessons · enrollments · partners · loyalty_ledger (🔜F6)
 | min_lead_days, daily_limit | int null | para encomendas |
 | search_vector | tsvector gerado | nome + descrição + ingredientes, `unaccent` |
 
-Disponibilidade **não é campo**: é a view `v_product_availability` = `status = 'active'` e (saldo disponível > 0 ou `stock_mode <> 'tracked'`).
+Disponibilidade **não é campo** (a quantidade em `available_quantity` só aparece para a equipe): é a view `v_product_availability` = `status = 'active'` e (saldo disponível > 0 ou `stock_mode <> 'tracked'`).
 
 ### `product_media`
 `id, product_id, storage_path, alt_text not null, sort_order, is_cover`

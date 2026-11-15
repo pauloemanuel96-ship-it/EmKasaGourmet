@@ -89,7 +89,7 @@ export function BoxBuilder() {
           <p className="text-ink-600 text-sm">
             Montado cruzando o seu perfil com o estoque real de hoje.
           </p>
-          <ul className="divide-sand-200 divide-y rounded-(--radius-media) bg-white">
+          <ul className="divide-sand-200 bg-paper divide-y rounded-(--radius-media)">
             {suggestion.items.map((i) => {
               const p = productBySlug(i.slug)!;
               return (
@@ -155,7 +155,7 @@ export function BoxBuilder() {
               onChange={(e) =>
                 setFrequency(e.target.value as "semanal" | "quinzenal")
               }
-              className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3 text-sm"
+              className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-sm"
             >
               <option value="semanal">Toda semana</option>
               <option value="quinzenal">A cada 15 dias</option>

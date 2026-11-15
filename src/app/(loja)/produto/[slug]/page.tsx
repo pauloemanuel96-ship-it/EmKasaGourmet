@@ -50,7 +50,7 @@ export default async function ProdutoPage({
         <ProductArt name={p.name} tone={p.tone} />
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+            <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
               {p.category}
             </p>
             <h1 className="text-4xl">{p.name}</h1>

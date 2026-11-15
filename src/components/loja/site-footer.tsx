@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteFooter() {
   return (
@@ -9,6 +10,7 @@ export function SiteFooter() {
           <p className="text-ink-600 text-sm">
             Alimentar é uma forma de cuidar.
           </p>
+          <ThemeToggle />
         </div>
         <nav aria-label="Rodapé" className="flex flex-col gap-2 text-sm">
           <Link href="/loja" className="text-ink-600 hover:text-forest-900">
@@ -19,6 +21,12 @@ export function SiteFooter() {
           </Link>
           <Link href="/receitas" className="text-ink-600 hover:text-forest-900">
             Receitas
+          </Link>
+          <Link href="/escola" className="text-ink-600 hover:text-forest-900">
+            Escola
+          </Link>
+          <Link href="/clube" className="text-ink-600 hover:text-forest-900">
+            Clube
           </Link>
           <Link href="/admin" className="text-ink-600 hover:text-forest-900">
             Painel da equipe

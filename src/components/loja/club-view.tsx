@@ -18,7 +18,7 @@ export function ClubView() {
         {CLUB_REWARDS.map((r) => (
           <li
             key={r.points}
-            className="flex flex-col gap-3 rounded-(--radius-media) bg-white p-5"
+            className="bg-paper flex flex-col gap-3 rounded-(--radius-media) p-5"
           >
             <p className="text-forest-900 font-serif text-2xl">
               {r.points} pts
@@ -40,7 +40,7 @@ export function ClubView() {
         <p className="text-ink-600 text-sm">
           Na versão real, cada indicação que fizer a primeira compra rende
           pontos para os dois. Seu link:{" "}
-          <code className="rounded bg-white px-1">emkasa.com.br/i/DEMO123</code>
+          <code className="bg-paper rounded px-1">emkasa.com.br/i/DEMO123</code>
         </p>
       </section>
     </div>

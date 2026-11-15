@@ -40,7 +40,7 @@ export function ProductTile({ product }: { product: Product }) {
         <p className="text-ink-600 text-sm">{product.unitLabel}</p>
         <p className="text-terracotta-500 font-medium">{formatCents(price)}</p>
         {product.diet.length > 0 && (
-          <p className="text-leaf-500 text-xs">
+          <p className="text-leaf-700 text-xs">
             {product.diet.map((d) => DIET_LABEL[d]).join(" · ")}
           </p>
         )}

@@ -1,20 +1,32 @@
 @import "tailwindcss";
 
 /*
- * Tokens provisórios do DESIGN_SYSTEM.md (v0.1).
- * Revisar quando a identidade definitiva da Emkasa for aprovada.
+ * Tokens do DESIGN_SYSTEM.md (v0.2).
+ * Verde, creme, laranja, amarelo e vermelho "brand-*" foram medidos no logo oficial.
+ * Os demais continuam provisórios até a identidade completa ser aprovada.
+ * O modo escuro troca os VALORES destes tokens (bloco [data-theme="dark"]),
+ * por isso os componentes não precisam de classes "dark:".
  */
 @theme {
   --color-forest-900: #1f3a2b;
   --color-forest-700: #2f5640;
-  --color-leaf-500: #6e8f5a;
+  --color-leaf-700: #4f6b3a;
+  --color-leaf-500: #739251;
   --color-cream-50: #faf6ee;
+  --color-paper: #ffffff;
   --color-sand-200: #eadfcb;
   --color-terracotta-500: #b8613d;
   --color-ink-900: #1c1b18;
   --color-ink-600: #5a5650;
   --color-danger-600: #b42318;
   --color-warning-600: #b54708;
+
+  /* Cores do logo: uso decorativo (não usar em texto pequeno sobre claro). */
+  --color-brand-green: #739251;
+  --color-brand-cream: #ffffad;
+  --color-brand-orange: #f9630e;
+  --color-brand-yellow: #fed216;
+  --color-brand-red: #dc1601;
 
   --font-serif: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -24,6 +36,26 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --color-forest-900: #e6eedd;
+    --color-forest-700: #c5d6b6;
+    --color-leaf-700: #a9c98a;
+    --color-leaf-500: #8fb26c;
+    --color-cream-50: #131814;
+    --color-paper: #1b221c;
+    --color-sand-200: #2a332b;
+    --color-terracotta-500: #e8a07c;
+    --color-ink-900: #edebe5;
+    --color-ink-600: #b5b1a8;
+    --color-danger-600: #ff9388;
+    --color-warning-600: #f5ab66;
+  }
+
   html {
     background-color: var(--color-cream-50);
     color: var(--color-ink-900);
@@ -47,6 +79,14 @@
     outline-offset: 2px;
   }
 
+  /* Resposta imediata ao toque, sem o atraso de duplo toque. */
+  a,
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -55,4 +95,8 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

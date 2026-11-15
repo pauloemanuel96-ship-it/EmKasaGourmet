@@ -21,7 +21,7 @@ export function AllergenBlock({ product }: { product: Product }) {
   return (
     <div
       role="note"
-      className="border-sand-200 flex flex-col gap-1 rounded-(--radius-control) border bg-white p-4 text-sm"
+      className="border-sand-200 bg-paper flex flex-col gap-1 rounded-(--radius-control) border p-4 text-sm"
     >
       <p className="text-forest-900 font-medium">Alergênicos</p>
       {none && (

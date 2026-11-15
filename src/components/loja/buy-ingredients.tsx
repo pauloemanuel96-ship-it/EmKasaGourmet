@@ -20,7 +20,7 @@ export function BuyIngredients({ slugs }: { slugs: string[] }) {
   return (
     <section
       aria-labelledby="comprar"
-      className="mt-12 rounded-(--radius-media) bg-white p-6"
+      className="bg-paper mt-12 rounded-(--radius-media) p-6"
     >
       <h2 id="comprar" className="mb-4 text-2xl">
         Compre os ingredientes

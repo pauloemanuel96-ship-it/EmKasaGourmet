@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Escola" };
 export default function EscolaPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pt-10 sm:px-6">
-      <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+      <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
         Emkasa Escola
       </p>
       <h1 className="mb-3 text-4xl">Aprenda com a Chef Angela</h1>
@@ -19,9 +19,9 @@ export default function EscolaPage() {
         {COURSES.map((c) => (
           <li
             key={c.slug}
-            className="flex flex-col gap-3 rounded-(--radius-media) bg-white p-6"
+            className="bg-paper flex flex-col gap-3 rounded-(--radius-media) p-6"
           >
-            <p className="text-leaf-500 text-xs font-medium tracking-wide uppercase">
+            <p className="text-leaf-700 text-xs font-medium tracking-wide uppercase">
               {c.format}
             </p>
             <h2 className="text-xl">{c.title}</h2>

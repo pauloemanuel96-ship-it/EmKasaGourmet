@@ -23,7 +23,7 @@ export function Section({
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div className="flex max-w-2xl flex-col gap-2">
           {eyebrow && (
-            <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+            <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
               {eyebrow}
             </p>
           )}

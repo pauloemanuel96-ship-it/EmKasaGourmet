@@ -48,7 +48,7 @@ export function HouseholdEditor({ onSaved }: { onSaved?: () => void }) {
         {members.map((m, idx) => (
           <li
             key={m.id}
-            className="border-sand-200 flex flex-col gap-4 rounded-(--radius-media) border bg-white p-5"
+            className="border-sand-200 bg-paper flex flex-col gap-4 rounded-(--radius-media) border p-5"
           >
             <div className="flex flex-wrap items-end justify-between gap-3">
               <label className="flex flex-col gap-1 text-sm font-medium">
@@ -78,7 +78,7 @@ export function HouseholdEditor({ onSaved }: { onSaved?: () => void }) {
                 onChange={(e) =>
                   patch(m.id, { diet: e.target.value as Member["diet"] })
                 }
-                className="border-ink-600/30 min-h-11 rounded-(--radius-control) border bg-white px-3 text-base font-normal"
+                className="border-ink-600/30 bg-paper min-h-11 rounded-(--radius-control) border px-3 text-base font-normal"
               >
                 <option value="sem_restricao">Sem restrição</option>
                 {(Object.keys(DIET_LABEL) as DietLabel[]).map((d) => (

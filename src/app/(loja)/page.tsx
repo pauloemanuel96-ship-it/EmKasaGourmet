@@ -21,7 +21,7 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 sm:px-6 md:grid-cols-2 md:pt-20">
         <div className="flex flex-col gap-6">
-          <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+          <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
             Horta · Cozinha · Casa
           </p>
           <h1 className="text-4xl sm:text-6xl">
@@ -74,7 +74,7 @@ export default function Home() {
             ],
           ].map(([t, d], i) => (
             <li key={t} className="flex flex-col gap-2">
-              <span className="text-leaf-500 font-serif text-3xl">{i + 1}</span>
+              <span className="text-leaf-700 font-serif text-3xl">{i + 1}</span>
               <p className="text-forest-900 font-medium">{t}</p>
               <p className="text-ink-600 text-sm">{d}</p>
             </li>
@@ -155,7 +155,7 @@ export default function Home() {
       >
         <ProductArt name="Chef Angela Acioli" tone="#2f5640" ratio="4/5" />
         <div className="flex flex-col gap-4">
-          <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+          <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
             Quem cozinha
           </p>
           <h2 id="chef" className="text-3xl sm:text-4xl">
@@ -229,7 +229,7 @@ export default function Home() {
         <ul className="grid gap-6 md:grid-cols-2">
           {TESTIMONIALS.map((t) => (
             <li key={t.name}>
-              <figure className="flex h-full flex-col gap-3 rounded-(--radius-media) bg-white p-6">
+              <figure className="bg-paper flex h-full flex-col gap-3 rounded-(--radius-media) p-6">
                 <blockquote className="text-forest-900 font-serif text-lg">
                   “{t.text}”
                 </blockquote>

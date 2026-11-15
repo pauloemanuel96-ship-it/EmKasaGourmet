@@ -22,7 +22,7 @@ export function TodayList() {
           <h2 id={`h-${u}`} className="mb-2 text-xl">
             {UNIT_LABEL[u]}
           </h2>
-          <ul className="divide-sand-200 divide-y rounded-(--radius-media) bg-white">
+          <ul className="divide-sand-200 bg-paper divide-y rounded-(--radius-media)">
             {tracked
               .filter((p) => p.unit === u)
               .map((p) => {
@@ -110,7 +110,7 @@ export function OrdersBoard() {
         {orders.map((o) => (
           <li
             key={o.number}
-            className="flex flex-col gap-2 rounded-(--radius-media) bg-white p-4 text-sm"
+            className="bg-paper flex flex-col gap-2 rounded-(--radius-media) p-4 text-sm"
           >
             <div className="flex flex-wrap justify-between gap-2">
               <span className="font-medium">
@@ -237,7 +237,7 @@ export function AssistantChat() {
         {msgs.map((m, i) => (
           <li
             key={i}
-            className={`max-w-[85%] rounded-(--radius-media) p-3 text-sm ${m.from === "chef" ? "bg-forest-900 text-cream-50 self-end" : "bg-white"}`}
+            className={`max-w-[85%] rounded-(--radius-media) p-3 text-sm ${m.from === "chef" ? "bg-forest-900 text-cream-50 self-end" : "bg-paper"}`}
           >
             <p>{m.text}</p>
             {m.proposal && m.state === "pendente" && (
@@ -278,7 +278,7 @@ export function AssistantChat() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Escreva como falaria no WhatsApp…"
-          className="border-ink-600/30 min-h-11 flex-1 rounded-(--radius-control) border bg-white px-3"
+          className="border-ink-600/30 bg-paper min-h-11 flex-1 rounded-(--radius-control) border px-3"
         />
         <button
           type="submit"

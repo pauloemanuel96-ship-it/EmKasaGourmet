@@ -51,7 +51,7 @@ export function MyHome() {
             {s.members.map((m) => (
               <li
                 key={m.id}
-                className="rounded-(--radius-control) bg-white p-4 text-sm"
+                className="bg-paper rounded-(--radius-control) p-4 text-sm"
               >
                 <p className="font-medium">{m.nickname}</p>
                 <p className="text-ink-600">
@@ -98,7 +98,7 @@ export function MyHome() {
             </Link>
           </p>
         ) : (
-          <div className="flex flex-col gap-4 rounded-(--radius-media) bg-white p-5 text-sm">
+          <div className="bg-paper flex flex-col gap-4 rounded-(--radius-media) p-5 text-sm">
             <p className="text-forest-900 font-serif text-xl">
               {planName(sub.planCode)} · {sub.frequency}
             </p>
@@ -179,7 +179,7 @@ export function MyHome() {
         {s.orders.length === 0 ? (
           <p className="text-ink-600">Nenhum pedido ainda.</p>
         ) : (
-          <ul className="divide-sand-200 divide-y rounded-(--radius-media) bg-white">
+          <ul className="divide-sand-200 bg-paper divide-y rounded-(--radius-media)">
             {s.orders.map((o) => (
               <li key={o.number}>
                 <Link

@@ -40,7 +40,7 @@ export function CartView() {
           >
             {STORAGE_LABEL[storage]}
           </h2>
-          <ul className="divide-sand-200 divide-y rounded-(--radius-media) bg-white">
+          <ul className="divide-sand-200 bg-paper divide-y rounded-(--radius-media)">
             {items.map((l) => (
               <li
                 key={l.slug}

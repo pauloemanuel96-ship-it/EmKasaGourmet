@@ -40,7 +40,7 @@ export function OrderTracking() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <p className="text-leaf-500 text-xs font-medium tracking-widest uppercase">
+        <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
           Pedido {order.number}
         </p>
         <h1 className="text-4xl">
@@ -72,7 +72,7 @@ export function OrderTracking() {
         </ol>
       )}
 
-      <section className="rounded-(--radius-media) bg-white p-5 text-sm">
+      <section className="bg-paper rounded-(--radius-media) p-5 text-sm">
         <ul className="flex flex-col gap-1">
           {order.lines.map((l) => (
             <li key={l.slug} className="flex justify-between">

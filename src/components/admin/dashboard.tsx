@@ -47,7 +47,7 @@ export function Dashboard() {
           <li key={c.label}>
             <Link
               href={c.href}
-              className="hover:ring-sand-200 flex h-full flex-col gap-1 rounded-(--radius-media) bg-white p-4 hover:ring-2"
+              className="hover:ring-sand-200 bg-paper flex h-full flex-col gap-1 rounded-(--radius-media) p-4 hover:ring-2"
             >
               <span className="text-ink-600 text-xs">{c.label}</span>
               <span className="text-forest-900 font-serif text-2xl">
@@ -93,7 +93,7 @@ export function Dashboard() {
             Nenhum pedido ainda. Faça um pela loja para testar o fluxo.
           </p>
         ) : (
-          <ul className="divide-sand-200 divide-y rounded-(--radius-media) bg-white text-sm">
+          <ul className="divide-sand-200 bg-paper divide-y rounded-(--radius-media) text-sm">
             {s.orders.slice(0, 5).map((o) => (
               <li
                 key={o.number}

@@ -6,7 +6,7 @@ import { signOut } from "@/modules/auth/actions";
 export default function PainelLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="bg-cream-50 flex min-h-full flex-1 flex-col">
-      <header className="border-sand-200 sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
+      <header className="border-sand-200 bg-paper/95 sticky top-0 z-20 border-b backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-2">
           <Link href="/admin" className="text-forest-900 font-serif text-lg">
             Painel Emkasa

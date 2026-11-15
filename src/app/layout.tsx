@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { PwaRegister } from "@/components/pwa-register";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 // Fontes self-hosted (sem chamada ao Google Fonts no build nem no navegador).
@@ -23,10 +25,18 @@ export const metadata: Metadata = {
     template: "%s · Emkasa Gourmet",
   },
   description: "Alimentar é uma forma de cuidar.",
+  applicationName: "Emkasa Gourmet",
+  appleWebApp: {
+    capable: true,
+    title: "Emkasa",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1f3a2b",
+  themeColor: "#faf6ee",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -34,8 +44,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="pt-BR"
       className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }
