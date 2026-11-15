@@ -560,3 +560,42 @@ describe("Slugs", () => {
     expect(row).toEqual({ a: "ceia-de-natal-familia-amigos", b: null });
   });
 });
+
+describe("JSON do formulário do painel", () => {
+  it("o payload montado pelo formulário é aceito pela função do banco", async () => {
+    const { productSchema, readProductForm, toProductPayload } =
+      await import("@/modules/catalogo/schemas");
+    const category = await idOf("categories", "slug", "blends-veganos");
+    const fd = new FormData();
+    for (const [k, v] of [
+      ["name", "[DEMO] Teste do formulário"],
+      ["category_id", category],
+      ["sale_unit", "pote"],
+      ["unit_size", "0,25"],
+      ["price", "19,90"],
+      ["status", "draft"],
+      ["storage", "congelado"],
+      ["seasonal_months", "6"],
+      ["sheet", "1"],
+    ]) {
+      fd.append(k, v);
+    }
+    const payload = toProductPayload(productSchema.parse(readProductForm(fd)));
+    const id = await call({ userId: OWNER }, "admin_save_product", payload);
+    const row = await one<{
+      price_cents: number;
+      unit_size: string;
+      storage: string;
+      seasonal_months: number[];
+    }>(
+      "select price_cents, unit_size::text, storage::text, seasonal_months from public.products where id = $1",
+      [id],
+    );
+    expect(row).toEqual({
+      price_cents: 1990,
+      unit_size: "0.250",
+      storage: "congelado",
+      seasonal_months: [6],
+    });
+  });
+});

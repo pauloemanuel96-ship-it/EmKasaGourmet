@@ -32,7 +32,8 @@ export default function PainelLayout({ children }: LayoutProps<"/admin">) {
         </div>
       </header>
       <p className="bg-sand-200 text-ink-600 px-4 py-1.5 text-center text-xs">
-        Modo demonstração: dados fictícios salvos neste navegador.
+        Produtos e Categorias gravam no banco. Hoje, Pedidos e Assistente ainda
+        são demonstração (dados fictícios neste navegador).
       </p>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         {children}

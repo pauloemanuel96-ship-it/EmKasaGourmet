@@ -79,7 +79,14 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 ### Módulo 2 dividido em duas entregas (15/11/2026)
 **2a ✅ Banco (migration 0006):** árvore de categorias com os nomes da Emkasa, canal loja/encomendas, unidades de venda extras, produto sob orçamento, campanhas (Natal, Ano-Novo, Páscoa, Dia das Mães, Eventos corporativos: desligadas e sem datas), grupos de filtro de alergênicos, rótulos incompatíveis, views `v_store_categories` e `v_store_catalog`, funções de gravação do painel e 19 testes.
 
-**2b ⏳ Telas (próxima entrega), nesta ordem:**
+**2b ⏳ Telas, em patches pequenos:**
+- ✅ **2b.1 Painel: Produtos e Categorias.** `src/modules/catalogo` (tipos, árvore, Zod, leituras do painel e Server Actions chamando `admin_save_product`, `admin_save_category`, `admin_set_product_status` e `validate_product_allergens`, com `updateTag('catalogo')`). Telas `/admin/produtos` (lista com busca e filtros, novo, editar com ficha técnica, rótulos, campanhas e validação da ficha) e `/admin/categorias` (árvore, nova, subcategoria, editar, ativar/desativar). Operação cria rascunho; administração edita e publica.
+- ✅ **2b.2 Painel: Ingredientes, Campanhas e Configurações (WhatsApp).** Auditoria em `docs/COMPLETE_PROJECT_AUDIT.md`.
+- ⏳ 2b.3 Loja lendo do banco (`use cache` + `cacheTag('catalogo')`, D-031) e dados DEMO com os nomes reais.
+- ⏳ 2b.4 Página `/encomendas` com aba em destaque.
+- ⏳ 2b.5 Visual leve.
+
+Plano detalhado original:
 1. `src/modules/catalogo`: tipos, leitura pública com `use cache` + `cacheTag('catalogo')`, reserva de demonstração (D-031), Server Actions com Zod chamando as funções da D-029 e `updateTag('catalogo')`.
 2. Painel: Produtos (lista e formulário com categoria, unidade, preço ou sob orçamento, disponibilidade, época, ingredientes, "pode conter", rótulos com evidência, campanhas, validar ficha), Categorias (criar, editar, ativar/desativar, subcategorias), Ingredientes, Campanhas, WhatsApp de atendimento em `settings`.
 3. Dados de demonstração com as categorias e os nomes reais informados pela Emkasa; preço, unidade e estoque marcados DEMO; sem ingredientes nem ficha validada inventados; variedades de exemplo marcadas `[DEMO]`. Ajustar BOX, receitas, clube e testes do assistente que hoje usam produtos inventados.
@@ -87,3 +94,18 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 5. Visual leve: fundo mais claro, verde-oliva do logo nos botões, a fita amarelo-laranja do K como único gesto gráfico, ilustrações em traço por categoria no lugar de foto, botão "+" no cartão, pílula flutuante do carrinho, transição do cartão para a página do produto (`ViewTransition` do React 19.3).
 
 **Fica para depois de 2b:** fotos (bucket no Storage e envio pelo painel), tela Hoje real com saldo, pedido de orçamento gravado no banco (depende da política de privacidade).
+
+
+## Novas frentes (pedido do Paulo, 15/11/2026)
+
+Incorporadas depois da auditoria. Ordem: primeiro o que faz a loja vender de verdade e ficar bonita, depois as frentes novas.
+
+1. **2b.3 Loja lendo do banco** + **2b.4 Encomendas e Confraternizações** (já planejadas).
+2. **Mídia:** bucket `produtos` no Supabase Storage, fotos no cadastro do produto (principal, galeria, embalagem, composição), Biblioteca de Mídia, importação em lote por nome de arquivo/slug/CSV com tela de revisão (nunca sobrescreve sem confirmar) e `docs/PRODUCT_IMAGE_CATALOG.md` gerado a partir do banco.
+3. **Conteúdo editável:** banners (desktop/mobile, período, ordem, pré-visualização) e página **Quem Somos** com a Chef Angela (textos e fotos pelo painel, sem inventar biografia).
+4. **Visual premium** (2b.5): fotografia editorial, imagens 3D renderizadas em WebP/AVIF (sem WebGL pesado), microinterações sutis.
+5. **Assistente com IA de verdade:** ferramentas reais sobre o banco, três níveis de permissão (consulta, operação simples, sensível com confirmação), memória operacional separada dos dados oficiais, camada de provedores intercambiáveis (OpenAI, DeepSeek e outros, com fallback e limite de gasto). Comparativo de preços feito no dia da escolha.
+6. **BOX e assinatura** (Solo, Dupla, Família, Livre; semanal ou quinzenal; pausar e trocar).
+7. **Embalagens:** como produto adicional, custo operacional ou retornável com caução (caução só depois de regras definidas).
+8. **Emkasa Verde (Plantas e Mudas):** já dá para criar como categoria no painel; depois, variedades e tamanhos.
+9. **Emkasa Solidário:** contribuição por unidade separada da receita, campanhas com meta, arrecadado × entregue sem misturar, prestação de contas pública. Sem cobrança real enquanto o checkout for demonstração.

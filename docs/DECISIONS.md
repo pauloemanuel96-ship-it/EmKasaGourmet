@@ -120,3 +120,6 @@ Cada sabor ou variedade (Blends Veganos, Almôndegas) é um produto próprio den
 
 ## D-031 — Demonstração só enquanto não houver produto real · **Proposta (a implementar)**
 A loja lê `v_store_catalog`. Sem nenhum produto ativo no banco, mostra os dados de demonstração; a partir do primeiro produto ativo, mostra só os reais. Nunca mistura os dois.
+
+## D-032 — Formulários do painel enviam por `onSubmit` · **Aceita**
+O React 19 limpa o formulário depois de uma `<form action>`. Num erro de validação a pessoa perderia o que digitou. Os formulários do painel chamam a Server Action por `onSubmit` + `startTransition`, e o servidor continua validando com Zod e com a função SQL. Preço é digitado em reais ("24,90") e convertido para centavos sem ponto flutuante (`parseBRLToCents`).
