@@ -79,3 +79,9 @@ As migrations reais rodam num Postgres em memória (`@electric-sql/pglite`) com 
 
 ## D-018 — Chaves novas do Supabase · **Aceita**
 Usar a chave publicável (`sb_publishable_...`) no app e a chave secreta (`sb_secret_...`) só no servidor, em vez das chaves legadas `anon`/`service_role`. As secretas podem ser revogadas individualmente.
+
+## D-019 — Região do Supabase · **Proposta (reavaliar antes do lançamento)**
+O projeto `zzyrperrbmbcnrtrcmkm` foi criado em East US (Ohio): o plano gratuito não ofereceu São Paulo. Impacto: latência maior e transferência internacional de dados (LGPD). Antes de haver dados de clientes, recriar em `sa-east-1` se a opção estiver disponível (migrations recriam tudo).
+
+## D-020 — Protótipo navegável com dados fictícios · **Aceita**
+`src/demo/*` simula catálogo, estoque, pedidos, BOX, assinatura, clube e o assistente, com estado no navegador (localStorage). As regras puras (`src/demo/logic.ts`) têm testes e servem de especificação para a versão real. Cada módulo será trocado pelo Supabase, um de cada vez, e `src/demo` some ao final.
