@@ -40,7 +40,7 @@ Saldo derivado de `inventory_movements` imutáveis; `stock_levels` materializado
 
 ## D-007 — Regras críticas em funções Postgres · **Aceita**
 `create_order`, `confirm_payment`, `cancel_order` e `register_stock_movement` ficam no banco, em transação com lock de linha.
-**Trade-off:** SQL é menos familiar que TS, por isso exige teste pgTAP obrigatório para cada função.
+**Trade-off:** SQL é menos familiar que TS, por isso exige teste de banco obrigatório (D-017) para cada função.
 
 ## D-008 — Assistente operacional na Fase 3, tela "Hoje" no MVP · **Proposta**
 Ver ROADMAP. Reduz risco e custo no lançamento, e a IA chega depois operando sobre fluxo real.
@@ -72,3 +72,10 @@ O Paulo já usa npm no Windows (`npm.cmd`). Uma ferramenta a menos para instalar
 ## D-016 — Visibilidade do repositório · **Proposta**
 O repositório `EmKasaGourmet` está **público**. Hoje não há segredos nele, mas os documentos expõem a estratégia do negócio e o schema do banco.
 **Recomendação:** torná-lo privado (Settings → General → Danger Zone → Change visibility). Não afeta CI nem deploy.
+
+## D-017 — Testes de banco com PGlite em vez de pgTAP · **Aceita**
+As migrations reais rodam num Postgres em memória (`@electric-sql/pglite`) com um stub mínimo do Supabase (`auth.uid()`, papéis `anon`/`authenticated`). Os testes ficam em `tests/db` e rodam no `npm test` e no CI, sem Docker.
+**Limite:** não substitui um teste no Supabase real (Auth, Storage, Realtime). Para isso, usar o projeto de staging antes do lançamento.
+
+## D-018 — Chaves novas do Supabase · **Aceita**
+Usar a chave publicável (`sb_publishable_...`) no app e a chave secreta (`sb_secret_...`) só no servidor, em vez das chaves legadas `anon`/`service_role`. As secretas podem ser revogadas individualmente.

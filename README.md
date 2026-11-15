@@ -3,7 +3,7 @@
 Plataforma digital da Emkasa Gourmet: loja (horta, cozinha, produtos próprios), painel operacional da Chef Angela
 e base para BOX, assinaturas, Escola e Clube.
 
-> **Status:** Sprint 1 em andamento. Tarefas 1 (estrutura do app) e 2 (CI) concluídas.
+> **Status:** Sprint 1 em andamento. Tarefas 1 a 7 concluídas (app, CI, Supabase, schema de catálogo/estoque/auditoria).
 
 ## Documentação
 | Arquivo | Conteúdo |
@@ -46,10 +46,10 @@ emkasa-gourmet/
 │   └── types/                 # tipos gerados do banco (supabase gen types)
 ├── supabase/
 │   ├── migrations/
-│   ├── tests/                 # pgTAP
 │   ├── seed.sql               # somente [DEMO]
 │   └── config.toml
 ├── tests/
+│   ├── db/                    # migrations + RLS + estoque (PGlite)
 │   ├── unit/
 │   └── e2e/
 ├── scripts/                   # importar CSV de produtos, backup
@@ -68,4 +68,4 @@ npm run lint
 npm run typecheck
 ```
 
-O banco local (Supabase CLI) entra na tarefa 3.
+Banco: as migrations ficam em `supabase/migrations` e são aplicadas no projeto remoto com `npx supabase db push` (ver docs/ROADMAP.md).

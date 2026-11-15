@@ -24,7 +24,7 @@ BOX, assinaturas, Minha Casa, Escola, Clube e Parceiros são **apenas modelados*
 ## Regras inegociáveis
 1. Não inventar dados da empresa: preços, produtos, prazos, regiões, políticas. Dado faltando → `docs/PENDENCIAS.md`.
 2. Dado de demonstração só no `supabase/seed.sql`, sempre com prefixo `[DEMO]` no nome.
-3. Nenhum segredo no frontend. Só `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` são públicas.
+3. Nenhum segredo no frontend. Só `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` são públicas. `SUPABASE_SECRET_KEY` só no servidor.
 4. RLS ligado em **todas** as tabelas. Tabela nova sem policy = PR rejeitado.
 5. Validação no servidor com Zod em toda Server Action e Route Handler.
 6. Estoque só muda por `inventory_movements` (livro-razão). Nunca dar `UPDATE` direto no saldo.
@@ -44,7 +44,8 @@ BOX, assinaturas, Minha Casa, Escola, Clube e Parceiros são **apenas modelados*
 - Ao concluir uma funcionalidade: `npm run lint && npm run typecheck && npm test && npm run build`, conferir mobile (360px),
   conferir acessibilidade (teclado, contraste, labels) e atualizar a documentação afetada.
 - Commits pequenos, por funcionalidade, em português: `feat(catalogo): ...`, `fix(estoque): ...`.
-- Migrations SQL versionadas em `supabase/migrations`. Nunca alterar migration já aplicada.
+- Migrations SQL versionadas em `supabase/migrations`. Nunca alterar migration já aplicada no projeto remoto: crie uma nova.
+- Toda regra de banco tem teste em `tests/db` (PGlite, sem Docker). Rodam com `npm test`.
 - Ao faltar informação: registrar em PENDENCIAS.md e seguir com o que for possível.
 
 ## Estrutura

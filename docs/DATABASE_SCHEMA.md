@@ -181,4 +181,4 @@ Atualizado **somente** pelo trigger `after insert on inventory_movements`. Const
 | `release_expired_reservations()` | pg_cron a cada 5 min |
 | `available_delivery_dates(zone_id, from)` | dias × prazo de corte × bloqueios × capacidade |
 
-Cada função tem teste pgTAP cobrindo: saldo insuficiente, concorrência (dois pedidos no último item), webhook duplicado e expiração.
+Cada função tem teste em `tests/db` (D-017) cobrindo: saldo insuficiente, concorrência (dois pedidos no último item), webhook duplicado e expiração.

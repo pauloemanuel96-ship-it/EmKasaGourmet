@@ -31,7 +31,7 @@ O briefing colocava a interface conversacional no MVP. **Recomendo a Fase 3**, c
 - [ ] Home, catálogo, busca e página de produto com dados **reais** (mínimo de 15 produtos com foto)
 - [ ] Painel: login, papéis, CRUD de produto com ingredientes/alergênicos, tela "Hoje", histórico de estoque, auditoria
 - [ ] Alterar disponibilidade no painel reflete na loja em < 5 s
-- [ ] Testes pgTAP de estoque e RLS passando; Lighthouse mobile ≥ 90 em Performance e Acessibilidade
+- [ ] Testes de banco (estoque e RLS) passando; Lighthouse mobile ≥ 90 em Performance e Acessibilidade
 - [ ] **A Chef atualiza o estoque sozinha por 1 semana**
 
 ### Fase 2 (lançamento)
@@ -53,11 +53,11 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 |---|---|---|
 | 1 | ✅ Criar app Next.js 16 + TS strict + Tailwind 4 + ESLint/Prettier + Vitest (shadcn/ui entra junto com o primeiro componente do painel) | `npm run dev` e `npm test` ok |
 | 2 | ✅ GitHub Actions: lint, typecheck, format, test, build | CI verde no PR |
-| 3 | Supabase CLI local + projeto remoto; `.env.example` | conexão nos dois ambientes |
-| 4 | Migration 001: enums, `categories`, `producers`, `locations`, `products`, `product_media` | tabelas + RLS (leitura pública só de `active`) |
-| 5 | Migration 002: `allergens`, `ingredients`, ligações, trigger de alergênicos por ingrediente | teste pgTAP do trigger |
-| 6 | Migration 003: `inventory_movements`, `stock_levels`, trigger, `register_stock_movement`, view de disponibilidade | teste pgTAP: saldo nunca negativo |
-| 7 | Migration 004: `staff_roles`, `has_role()`, `audit_log` + trigger genérico, `settings` | teste de RLS por papel |
+| 3 | ✅ Supabase CLI + projeto remoto (`zzyrperrbmbcnrtrcmkm`, São Paulo); clientes server/browser; `.env.example` | `db push` aplicado |
+| 4 | ✅ Migrations 0001–0002: base, catálogo, mídia | tabelas + RLS (leitura pública só de `active`) |
+| 5 | ✅ Alergênicos, ingredientes (com derivados), trigger e invalidação; regra do "orgânico" | testes em `tests/db` |
+| 6 | ✅ Migration 0003: livro-razão, saldos, `register_stock_movement`, `v_product_availability` | teste: saldo nunca negativo |
+| 7 | ✅ `staff_roles`, `has_role()`, `audit_log`, `settings` (na 0001) + dados de referência (0004) | teste de RLS por papel |
 | 8 | Auth do painel (magic link) + middleware de proteção `/admin` | usuário sem papel recebe 403 |
 | 9 | Tokens do DESIGN_SYSTEM no Tailwind, fontes via `next/font`, layout base da loja e do painel | página de estilo `/dev/ui` (apenas em dev) |
 | 10 | Painel: lista e formulário de produto (sem fotos ainda) | criar/editar produto com auditoria |

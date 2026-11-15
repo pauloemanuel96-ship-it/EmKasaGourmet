@@ -83,7 +83,7 @@ A política de quais ações dispensam confirmação vive em código (lista fixa
 | Pagamento | Mercado Pago Checkout Pro | Ver D-005 |
 | IA | Claude API (Fase 3) | Modelo econômico para interpretação e chave só no servidor |
 | Jobs | `pg_cron` no Supabase | Substitui n8n no MVP |
-| Testes | Vitest (domínio) + testes SQL (pgTAP) + Playwright (fluxo de compra) | |
+| Testes | Vitest (domínio) + testes de banco com PGlite (D-017) + Playwright (fluxo de compra) | |
 | CI | GitHub Actions | lint, typecheck, test em cada push/PR |
 | Hospedagem | Vercel Hobby (dev) → produção conforme D-003 | Hobby **não permite uso comercial** |
 
