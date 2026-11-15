@@ -9,6 +9,8 @@ type Item = {
   /** Caminho SVG (24x24, traço). */
   icon: string;
   match: (path: string) => boolean;
+  /** Item em destaque (cor da marca mesmo sem estar ativo). */
+  highlight?: boolean;
 };
 
 const ITEMS: Item[] = [
@@ -31,10 +33,12 @@ const ITEMS: Item[] = [
     match: (p) => p.startsWith("/box"),
   },
   {
-    href: "/receitas",
-    label: "Receitas",
-    icon: "M6 4h11a1 1 0 0 1 1 1v15H7a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1Zm3 5h6M9 13h6",
-    match: (p) => p.startsWith("/receitas"),
+    href: "/encomendas",
+    label: "Encomendas",
+    // Presente: caixa com laço.
+    icon: "M4 10h16v10H4V10Zm-1-3h18v3H3V7Zm9 0v13M12 7c-1.5-3-5-3-5-1s3 1 5 1Zm0 0c1.5-3 5-3 5-1s-3 1-5 1Z",
+    match: (p) => p.startsWith("/encomendas"),
+    highlight: true,
   },
   {
     href: "/minha-casa",
@@ -61,7 +65,7 @@ export function BottomNav() {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className="text-ink-600 aria-[current=page]:text-forest-900 flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-transform active:scale-95"
+                className={`${item.highlight ? "text-terracotta-500" : "text-ink-600"} aria-[current=page]:text-forest-900 flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-transform active:scale-95`}
               >
                 <svg
                   aria-hidden="true"

@@ -7,7 +7,9 @@ import { SiteHeader } from "@/components/loja/site-header";
 export default function LojaLayout({ children }: LayoutProps<"/">) {
   return (
     <>
-      <DemoBanner />
+      <Suspense fallback={<div className="bg-forest-900 h-8" />}>
+        <DemoBanner />
+      </Suspense>
       <Suspense
         fallback={<div className="border-sand-200 h-[68px] border-b" />}
       >

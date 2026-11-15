@@ -3,86 +3,152 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/loja/add-to-cart";
 import { AllergenBlock } from "@/components/loja/allergen-block";
-import { LivePrice } from "@/components/loja/live-price";
-import { ProductArt } from "@/components/loja/product-art";
-import {
-  DIET_LABEL,
-  PRODUCTS,
-  RECIPES,
-  STORAGE_LABEL,
-  UNIT_LABEL,
-  productBySlug,
-} from "@/demo/data";
+import { DemoPrice } from "@/components/loja/demo-price";
+import { DemoTag } from "@/components/loja/demo-tag";
+import { ProductImage } from "@/components/loja/product-image";
+import { RECIPES } from "@/demo/data";
+import { formatCents } from "@/lib/money";
+import { getStoreCatalog, getStoreProduct } from "@/modules/catalogo/store";
+import { whatsappLink } from "@/modules/catalogo/store-types";
+import { STORAGE_LABEL } from "@/modules/catalogo/types";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const catalog = await getStoreCatalog();
+  return catalog.products.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/produto/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const p = productBySlug(slug);
-  return { title: p?.name ?? "Produto" };
+  const { product } = await getStoreProduct(slug);
+  return {
+    title: product?.name ?? "Produto",
+    description: product?.short ?? undefined,
+  };
 }
 
 export default async function ProdutoPage({
   params,
 }: PageProps<"/produto/[slug]">) {
   const { slug } = await params;
-  const p = productBySlug(slug);
+  const { product: p, catalog } = await getStoreProduct(slug);
   if (!p) notFound();
-  const recipes = RECIPES.filter((r) => r.products.includes(p.slug));
+  const recipes = p.isDemo
+    ? RECIPES.filter((r) => r.products.includes(p.slug))
+    : [];
+  const quote = p.quoteOnly || p.channel === "encomendas";
+  const wa = whatsappLink(
+    catalog.whatsapp,
+    `Olá! Quero um orçamento de "${p.name}" pela loja da Emkasa.`,
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
       <nav aria-label="Trilha" className="text-ink-600 mb-6 text-sm">
-        <Link href="/loja" className="hover:underline">
-          Loja
+        <Link
+          href={quote ? "/encomendas" : "/loja"}
+          className="hover:underline"
+        >
+          {quote ? "Encomendas" : "Loja"}
         </Link>{" "}
         /{" "}
-        <Link href={`/loja?unidade=${p.unit}`} className="hover:underline">
-          {UNIT_LABEL[p.unit]}
+        <Link
+          href={quote ? "/encomendas" : `/loja?secao=${p.sectionSlug}`}
+          className="hover:underline"
+        >
+          {p.sectionName}
         </Link>{" "}
         / {p.name}
       </nav>
       <div className="grid gap-10 md:grid-cols-2">
-        <ProductArt name={p.name} tone={p.tone} />
+        <div className="relative">
+          <ProductImage
+            product={p}
+            priority
+            sizes="(min-width: 768px) 50vw, 100vw"
+          />
+          {p.isDemo && <DemoTag className="absolute top-3 left-3" />}
+        </div>
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
-              {p.category}
+              {p.path.join(" · ")}
             </p>
             <h1 className="text-4xl">{p.name}</h1>
             <p className="text-ink-600">{p.unitLabel}</p>
-            <LivePrice slug={p.slug} />
+            {p.isDemo ? (
+              <DemoPrice slug={p.slug} />
+            ) : (
+              <p className="text-terracotta-500 text-2xl font-medium">
+                {p.priceCents !== null
+                  ? `${p.quoteOnly ? "A partir de " : ""}${formatCents(p.priceCents)}`
+                  : "Sob orçamento"}
+              </p>
+            )}
           </div>
-          <p className="text-ink-900">{p.description}</p>
+          {p.isDemo && (
+            <p className="bg-sand-200 rounded-(--radius-control) p-3 text-sm">
+              Produto de demonstração: preço e disponibilidade são fictícios e
+              ele não está à venda.
+            </p>
+          )}
+          {(p.description ?? p.short) && (
+            <p className="text-ink-900">{p.description ?? p.short}</p>
+          )}
           {p.diet.length > 0 && (
             <ul className="flex flex-wrap gap-2" aria-label="Alimentação">
               {p.diet.map((d) => (
                 <li
-                  key={d}
+                  key={d.code}
                   className="border-leaf-500/50 text-forest-700 rounded border px-2 py-1 text-xs"
                 >
-                  {DIET_LABEL[d]}
+                  {d.name}
                 </li>
               ))}
             </ul>
           )}
-          <AddToCart slug={p.slug} />
+          {quote ? (
+            wa ? (
+              <a
+                href={wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-forest-900 text-cream-50 hover:bg-forest-700 flex min-h-11 items-center justify-center rounded-(--radius-control) px-5 font-medium"
+              >
+                Pedir orçamento pelo WhatsApp
+              </a>
+            ) : (
+              <p className="bg-sand-200 text-ink-600 rounded-(--radius-control) p-4 text-sm">
+                Pedidos de orçamento abrem em breve.
+              </p>
+            )
+          ) : (
+            <AddToCart product={p} />
+          )}
           <AllergenBlock product={p} />
           <dl className="grid gap-3 text-sm">
-            <div>
-              <dt className="font-medium">Ingredientes</dt>
-              <dd className="text-ink-600">{p.ingredients.join(", ")}</dd>
-            </div>
+            {p.ingredients.length > 0 && (
+              <div>
+                <dt className="font-medium">Ingredientes</dt>
+                <dd className="text-ink-600">{p.ingredients.join(", ")}</dd>
+              </div>
+            )}
             <div>
               <dt className="font-medium">Conservação</dt>
               <dd className="text-ink-600">
-                {STORAGE_LABEL[p.storage]}. {p.conservation}
+                {STORAGE_LABEL[p.storage]}.
+                {p.conservation ? ` ${p.conservation}` : ""}
               </dd>
             </div>
+            {(p.yieldInfo || p.portions) && (
+              <div>
+                <dt className="font-medium">Rendimento</dt>
+                <dd className="text-ink-600">
+                  {p.yieldInfo ?? `${p.portions} porções`}
+                </dd>
+              </div>
+            )}
             {p.origin && (
               <div>
                 <dt className="font-medium">Origem</dt>

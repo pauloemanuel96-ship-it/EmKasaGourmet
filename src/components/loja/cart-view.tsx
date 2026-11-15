@@ -25,7 +25,10 @@ export function CartView() {
 
   const groups = new Map<Storage, typeof lines>();
   for (const l of lines) {
-    const st = productBySlug(l.slug)?.storage ?? "ambiente";
+    const st =
+      productBySlug(l.slug)?.storage ??
+      state.cart.find((c) => c.slug === l.slug)?.snap?.storage ??
+      "ambiente";
     groups.set(st, [...(groups.get(st) ?? []), l]);
   }
   const subtotal = lines.reduce((t, l) => t + l.priceCents * l.quantity, 0);

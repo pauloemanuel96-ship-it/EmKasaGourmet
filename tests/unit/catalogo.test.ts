@@ -260,3 +260,71 @@ describe("ingrediente, campanha e WhatsApp", () => {
     expect(normalizeWhatsapp("+1 415 555 0100")).toBeUndefined();
   });
 });
+
+describe("loja", () => {
+  it("filtro 'sem alergênico' exclui pode conter e ficha não validada", async () => {
+    const { filterProducts } = await import("@/modules/catalogo/store-filter");
+    const { demoCatalog, SEED_SECTIONS } = await import("@/demo/store-catalog");
+    const base = demoCatalog(SEED_SECTIONS).products[0];
+    const mk = (slug: string, over: Partial<typeof base>) => ({
+      ...base,
+      slug,
+      ...over,
+    });
+    const products = [
+      mk("a", { allergensValidated: true, blockedGroups: [] }),
+      mk("b", { allergensValidated: true, blockedGroups: ["gluten"] }),
+      mk("c", { allergensValidated: false, blockedGroups: [] }),
+    ];
+    const r = filterProducts(products, {
+      secao: null,
+      categoria: null,
+      busca: "",
+      sem: ["gluten"],
+      dieta: null,
+      soDisponiveis: false,
+      isAvailable: () => true,
+    });
+    expect(r.map((p) => p.slug)).toEqual(["a"]);
+  });
+
+  it("demonstração: tudo marcado DEMO, nome real sem ficha inventada", async () => {
+    const { demoCatalog, SEED_SECTIONS } = await import("@/demo/store-catalog");
+    const { products } = demoCatalog(SEED_SECTIONS);
+    expect(products.length).toBeGreaterThan(0);
+    expect(products.every((p) => p.isDemo)).toBe(true);
+    const farofa = products.find((p) => p.name === "Farofa Nutritiva de Soja");
+    expect(farofa).toMatchObject({
+      ingredients: [],
+      contains: [],
+      allergensValidated: false,
+      diet: [],
+      sectionSlug: "produtos-da-emkasa",
+    });
+  });
+
+  it("demonstração some junto com a seção desativada no painel", async () => {
+    const { demoCatalog, SEED_SECTIONS } = await import("@/demo/store-catalog");
+    const semHorta = SEED_SECTIONS.filter((s) => s.slug !== "horta-e-naturais");
+    const { products } = demoCatalog(semHorta);
+    expect(products.some((p) => p.sectionSlug === "horta-e-naturais")).toBe(
+      false,
+    );
+  });
+
+  it("rótulo de unidade com tamanho", async () => {
+    const { unitLabelOf } = await import("@/modules/catalogo/store-mapping");
+    expect(unitLabelOf("pote", "500.000")).toBe("Pote 500 g");
+    expect(unitLabelOf("kg", 1.5)).toBe("1,5 kg");
+    expect(unitLabelOf("maco", null)).toBe("Maço");
+    expect(unitLabelOf("kit", "2")).toBe("Kit");
+  });
+
+  it("link do WhatsApp leva a mensagem pronta", async () => {
+    const { whatsappLink } = await import("@/modules/catalogo/store-types");
+    expect(whatsappLink(null, "oi")).toBeNull();
+    expect(whatsappLink("+5579999991234", "Olá! Ceia")).toBe(
+      "https://wa.me/5579999991234?text=Ol%C3%A1!%20Ceia",
+    );
+  });
+});

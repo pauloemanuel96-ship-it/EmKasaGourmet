@@ -118,7 +118,7 @@ Cada sabor ou variedade (Blends Veganos, Almôndegas) é um produto próprio den
 ## D-030 — Grupos de filtro e rótulos incompatíveis · **Aceita (validar com responsável técnico)**
 `allergens.filter_group` agrupa para os filtros "sem X": glúten cobre trigo, centeio, cevada e aveia; leite cobre lactose; castanhas cobre cada castanha listada. `diet_label_blockers` impede rótulo que contraria a ficha ("sem glúten" com trigo; "vegano" com leite ou ovos). Na loja, rótulo só aparece se aprovado, com a ficha de alergênicos validada e sem alergênico incompatível.
 
-## D-031 — Demonstração só enquanto não houver produto real · **Proposta (a implementar)**
+## D-031 — Demonstração só enquanto não houver produto real · **Aceita (implementada na 2b.3)**
 A loja lê `v_store_catalog`. Sem nenhum produto ativo no banco, mostra os dados de demonstração; a partir do primeiro produto ativo, mostra só os reais. Nunca mistura os dois.
 
 ## D-032 — Formulários do painel enviam por `onSubmit` · **Aceita**

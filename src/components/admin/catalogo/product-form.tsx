@@ -202,7 +202,7 @@ export function ProductForm({
           <Field
             id="unit_size"
             label="Tamanho da unidade (opcional)"
-            hint="Ex.: 500 para um pote de 500 g; 0,5 para meio quilo."
+            hint="Pote, pacote, porção e bandeja: peso em gramas (ex.: 500). Quilo: em kg (ex.: 0,5). Litro: em litros."
             errors={errorsFor(state, "unit_size")}
           >
             {(a11y) => (

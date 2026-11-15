@@ -50,6 +50,15 @@ export function SiteHeader() {
               {n.label}
             </Link>
           ))}
+          <Link
+            href="/encomendas"
+            aria-current={
+              pathname.startsWith("/encomendas") ? "page" : undefined
+            }
+            className="bg-terracotta-500 hover:bg-terracotta-500/90 aria-[current=page]:ring-forest-900 inline-flex min-h-9 items-center rounded-full px-4 text-sm font-medium text-white aria-[current=page]:ring-2 aria-[current=page]:ring-offset-2"
+          >
+            Encomendas
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">

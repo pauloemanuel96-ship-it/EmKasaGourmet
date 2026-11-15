@@ -1,10 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { availableOf, demo, useDemo } from "@/demo/store";
+import { availableOf, demo, priceOf, useDemo } from "@/demo/store";
+import type { StoreProduct } from "@/modules/catalogo/store-types";
 
-export function AddToCart({ slug }: { slug: string }) {
-  const available = useDemo((s) => availableOf(s, slug));
+/** Limite por pedido para produtos reais enquanto o checkout é demonstração. */
+const MAX_QTY = 20;
+
+export function AddToCart({ product }: { product: StoreProduct }) {
+  const demoAvailable = useDemo((s) => availableOf(s, product.slug));
+  const demoPrice = useDemo((s) => priceOf(s, product.slug));
+  const available = product.isDemo
+    ? demoAvailable
+    : product.available
+      ? MAX_QTY
+      : 0;
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -46,16 +56,28 @@ export function AddToCart({ slug }: { slug: string }) {
         </div>
         <button
           type="button"
-          className="bg-forest-900 text-cream-50 hover:bg-forest-700 min-h-11 flex-1 rounded-(--radius-control) px-5 font-medium"
+          className="bg-forest-900 text-cream-50 hover:bg-forest-700 min-h-11 flex-1 rounded-(--radius-control) px-5 font-medium transition active:scale-[0.98]"
           onClick={() => {
-            const r = demo.addToCart(slug, qty);
+            const r = demo.addToCart(
+              product.slug,
+              qty,
+              product.isDemo
+                ? undefined
+                : {
+                    name: product.name,
+                    unitLabel: product.unitLabel,
+                    priceCents: product.priceCents ?? demoPrice,
+                    storage: product.storage,
+                    madeToOrder: product.madeToOrder,
+                  },
+            );
             setMsg(r.message);
           }}
         >
           Adicionar ao carrinho
         </button>
       </div>
-      {available < 99 && (
+      {product.isDemo && available < 99 && (
         <p className="text-ink-600 text-xs">{available} disponível(is) agora</p>
       )}
       {msg && (

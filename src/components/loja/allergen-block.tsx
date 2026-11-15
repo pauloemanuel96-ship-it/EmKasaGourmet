@@ -1,6 +1,10 @@
-import { ALLERGEN_LABEL, type Product } from "@/demo/data";
+import type { StoreProduct } from "@/modules/catalogo/store-types";
 
-export function AllergenBlock({ product }: { product: Product }) {
+export function AllergenBlock({
+  product,
+}: {
+  product: Pick<StoreProduct, "allergensValidated" | "contains" | "mayContain">;
+}) {
   if (!product.allergensValidated) {
     return (
       <div
@@ -11,8 +15,9 @@ export function AllergenBlock({ product }: { product: Product }) {
           ⚠ Informações de alergênicos em revisão
         </p>
         <p className="text-ink-600 mt-1">
-          Este produto não aparece nos filtros &quot;sem alergênico&quot; até a
-          ficha ser validada.
+          Se você tem alergia, fale com a gente antes de comprar. Este produto
+          não aparece nos filtros &quot;sem alergênico&quot; até a ficha ser
+          validada.
         </p>
       </div>
     );
@@ -32,13 +37,13 @@ export function AllergenBlock({ product }: { product: Product }) {
       {product.contains.length > 0 && (
         <p className="text-danger-600">
           <strong>Contém:</strong>{" "}
-          {product.contains.map((a) => ALLERGEN_LABEL[a]).join(", ")}
+          {product.contains.map((a) => a.name).join(", ")}
         </p>
       )}
       {product.mayContain.length > 0 && (
         <p className="text-warning-600">
           <strong>Pode conter:</strong>{" "}
-          {product.mayContain.map((a) => ALLERGEN_LABEL[a]).join(", ")}
+          {product.mayContain.map((a) => a.name).join(", ")}
         </p>
       )}
     </div>

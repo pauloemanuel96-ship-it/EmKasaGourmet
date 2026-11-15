@@ -14,11 +14,24 @@ import {
   PRODUCTS,
   productBySlug,
   type BoxPlan,
+  type Storage,
 } from "./data";
 import type { BoxItem, Member } from "./logic";
 
 export type OrderStatus =
   "pago" | "em_preparo" | "saiu_para_entrega" | "entregue" | "cancelado";
+
+/**
+ * Cópia do produto no momento em que entrou no carrinho. Necessária para
+ * produtos do banco, que não estão na lista de demonstração.
+ */
+export type CartSnap = {
+  name: string;
+  unitLabel: string;
+  priceCents: number;
+  storage: Storage;
+  madeToOrder: boolean;
+};
 
 export type OrderLine = {
   slug: string;
@@ -64,7 +77,7 @@ export type DemoState = {
   version: 1;
   stock: Record<string, number>;
   priceOverrides: Record<string, number>;
-  cart: { slug: string; quantity: number }[];
+  cart: { slug: string; quantity: number; snap?: CartSnap }[];
   orders: Order[];
   members: Member[];
   healthConsent: boolean;
@@ -153,7 +166,8 @@ export function priceOf(s: DemoState, slug: string): number {
 
 export function availableOf(s: DemoState, slug: string): number {
   const p = productBySlug(slug);
-  if (p?.madeToOrder) return 99;
+  // Produto do banco: a disponibilidade vem da loja (botão some se esgotado).
+  if (!p || p.madeToOrder) return 99;
   return Math.max(0, s.stock[slug] ?? 0);
 }
 
@@ -161,7 +175,16 @@ export function cartLines(s: DemoState): OrderLine[] {
   return s.cart
     .map((c) => {
       const p = productBySlug(c.slug);
-      if (!p) return null;
+      if (!p) {
+        if (!c.snap) return null;
+        return {
+          slug: c.slug,
+          name: c.snap.name,
+          unitLabel: c.snap.unitLabel,
+          priceCents: c.snap.priceCents,
+          quantity: c.quantity,
+        };
+      }
       return {
         slug: p.slug,
         name: p.name,
@@ -191,7 +214,11 @@ export const demo = {
     set(() => initialState());
   },
 
-  addToCart(slug: string, quantity = 1): { ok: boolean; message: string } {
+  addToCart(
+    slug: string,
+    quantity = 1,
+    snap?: CartSnap,
+  ): { ok: boolean; message: string } {
     load();
     const inCart = state.cart.find((c) => c.slug === slug)?.quantity ?? 0;
     const available = availableOf(state, slug);
@@ -210,7 +237,7 @@ export const demo = {
         ? s.cart.map((c) =>
             c.slug === slug ? { ...c, quantity: c.quantity + quantity } : c,
           )
-        : [...s.cart, { slug, quantity }];
+        : [...s.cart, snap ? { slug, quantity, snap } : { slug, quantity }];
       return { ...s, cart };
     });
     return { ok: true, message: "Adicionado ao carrinho." };
@@ -266,7 +293,8 @@ export const demo = {
     set((s) => {
       const stock = { ...s.stock };
       for (const l of lines) {
-        if (!productBySlug(l.slug)?.madeToOrder)
+        const p = productBySlug(l.slug);
+        if (p && !p.madeToOrder)
           stock[l.slug] = (stock[l.slug] ?? 0) - l.quantity;
       }
       const order: Order = {
@@ -306,7 +334,7 @@ export const demo = {
       if (status === "cancelado") {
         stock = { ...s.stock };
         for (const l of order.lines)
-          if (!productBySlug(l.slug)?.madeToOrder)
+          if (productBySlug(l.slug) && !productBySlug(l.slug)?.madeToOrder)
             stock[l.slug] = (stock[l.slug] ?? 0) + l.quantity;
       }
       const orders = s.orders.map((o) =>

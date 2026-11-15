@@ -13,11 +13,12 @@
 | Login da equipe e papéis (owner, admin, operacao) | ✅ Real | `staff_roles` + `StaffGate` + checagem de novo no banco. |
 | Painel: Produtos, Categorias, Ingredientes, Campanhas, WhatsApp | ✅ Real (entregas 2b.1 e 2b.2) | Grava no banco pelas funções SQL. |
 | Painel: Hoje, Pedidos, Assistente | ⚠️ Demonstração | Dados fictícios guardados no navegador (`src/demo/store.ts`). O aviso no topo diz isso. |
-| Loja: home, loja, produto, carrinho, checkout, BOX, clube, Minha Casa, receitas, escola | ⚠️ Demonstração | 21 arquivos ainda leem `src/demo/data.ts`. Nenhuma página da loja lê o banco ainda. |
+| Loja: home, loja, produto, encomendas | ✅ Lê o banco (2b.3) | Demonstração só sem produto ativo, sempre com selo DEMO. |
+| Loja: carrinho, checkout, BOX, clube, Minha Casa, receitas, escola | ⚠️ Demonstração | Checkout sem cobrança; BOX, clube, receitas e escola ainda usam `src/demo`. |
 | Checkout / pagamento | ⚠️ Simulado | Sem Mercado Pago. Nenhuma cobrança real é possível hoje (correto). |
 | Fotos de produto | ❌ Não existe | Tabela `product_media` existe, mas não há bucket no Storage, upload nem tela. A loja desenha ilustrações (`product-art.tsx`). |
 | Banners, Quem Somos, conteúdo editável | ❌ Não existe | Textos da home estão no código. |
-| Encomendas e Confraternizações (página pública) | ❌ Não existe | Estrutura no banco pronta (categoria `kind = encomendas`, `quote_only`, campanhas). |
+| Encomendas e Confraternizações (página pública) | ✅ `/encomendas` (2b.4) | Orçamento pelo WhatsApp configurado no painel. |
 | Assistente operacional | ⚠️ Regras fixas | `src/demo/logic.ts` interpreta frases com regras e age só nos dados fictícios. Não usa IA nem o banco. |
 | BOX / assinatura, Clube, Solidário, Embalagens, Plantas | ⚠️/❌ | BOX e Clube são telas de demonstração. Solidário e Embalagens não existem. Plantas e Mudas pode ser criada já como categoria. |
 
@@ -49,3 +50,4 @@
 |---|---|
 | 2b.1 | Painel de Produtos e Categorias gravando no banco. |
 | 2b.2 | Painel de Ingredientes, Campanhas e Configurações (WhatsApp). Auditoria e plano das novas frentes. |
+| 2b.3 + 2b.4 | Loja lendo do banco com demonstração marcada; página de Encomendas; filtros recolhidos no celular; título que estourava a tela em 360 px corrigido. |

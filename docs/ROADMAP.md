@@ -82,8 +82,8 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 **2b ⏳ Telas, em patches pequenos:**
 - ✅ **2b.1 Painel: Produtos e Categorias.** `src/modules/catalogo` (tipos, árvore, Zod, leituras do painel e Server Actions chamando `admin_save_product`, `admin_save_category`, `admin_set_product_status` e `validate_product_allergens`, com `updateTag('catalogo')`). Telas `/admin/produtos` (lista com busca e filtros, novo, editar com ficha técnica, rótulos, campanhas e validação da ficha) e `/admin/categorias` (árvore, nova, subcategoria, editar, ativar/desativar). Operação cria rascunho; administração edita e publica.
 - ✅ **2b.2 Painel: Ingredientes, Campanhas e Configurações (WhatsApp).** Auditoria em `docs/COMPLETE_PROJECT_AUDIT.md`.
-- ⏳ 2b.3 Loja lendo do banco (`use cache` + `cacheTag('catalogo')`, D-031) e dados DEMO com os nomes reais.
-- ⏳ 2b.4 Página `/encomendas` com aba em destaque.
+- ✅ **2b.3 Loja lendo do banco.** `getStoreCatalog()` lê `v_store_catalog` e `v_store_categories` com a chave pública, em `use cache` + `cacheTag('catalogo')`. Sem produto ativo (ou sem banco), entra a demonstração pendurada nas categorias reais, com selo DEMO (D-031). Home com uma vitrine por seção real, loja com seções e subcategorias, página de produto com orçamento por WhatsApp. Carrinho guarda cópia do produto real.
+- ✅ **2b.4 `/encomendas`** com as duas ceias em destaque, demais ocasiões, "como encomendar" e botão de WhatsApp. Aba em destaque no topo e na barra inferior.
 - ⏳ 2b.5 Visual leve.
 
 Plano detalhado original:

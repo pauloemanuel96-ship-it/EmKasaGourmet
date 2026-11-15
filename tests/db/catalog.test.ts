@@ -599,3 +599,60 @@ describe("JSON do formulário do painel", () => {
     });
   });
 });
+
+describe("Loja lendo do banco", () => {
+  it("o que o visitante recebe da view vira produto da loja sem perder nada", async () => {
+    const { toStoreProduct, buildSections } =
+      await import("@/modules/catalogo/store-mapping");
+    const category = await idOf("categories", "slug", "ceia-natural-emkasa");
+    await call({ userId: OWNER }, "admin_save_product", {
+      name: "Loja Teste Ceia",
+      category_id: category,
+      sale_unit: "kit",
+      quote_only: true,
+      status: "active",
+    });
+    const row = await productRow("loja-teste-ceia");
+    expect(row).toBeDefined();
+    const p = toStoreProduct(
+      row as unknown as Parameters<typeof toStoreProduct>[0],
+      "https://x.supabase.co",
+    );
+    expect(p).toMatchObject({
+      slug: "loja-teste-ceia",
+      channel: "encomendas",
+      sectionSlug: "encomendas-e-confraternizacoes",
+      categorySlug: "ceia-natural-emkasa",
+      priceCents: null,
+      quoteOnly: true,
+      unitLabel: "Kit",
+      isDemo: false,
+      cover: null,
+    });
+
+    const categories = await as(
+      db,
+      { anon: true },
+      async () =>
+        (
+          await db.query(
+            "select id, slug, name, description, parent_id, root_slug, kind, is_featured, depth, sort_path from public.v_store_categories",
+          )
+        ).rows,
+    );
+    const sections = buildSections(
+      categories as Parameters<typeof buildSections>[0],
+    );
+    expect(sections.map((s) => s.slug).slice(0, 4)).toEqual([
+      "produtos-da-emkasa",
+      "horta-e-naturais",
+      "refeicoes-congeladas",
+      "encomendas-e-confraternizacoes",
+    ]);
+    const ceias = sections
+      .find((s) => s.channel === "encomendas")
+      ?.children.filter((c) => c.featured)
+      .map((c) => c.name);
+    expect(ceias).toEqual(["Ceia Natural Emkasa", "Ceia Tradicional"]);
+  });
+});
