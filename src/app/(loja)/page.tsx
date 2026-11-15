@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeStage } from "@/components/loja/home-stage/home-stage";
 import { Photo } from "@/components/loja/photo";
 import { ProductArt } from "@/components/loja/product-art";
 import { ProductTile } from "@/components/loja/product-tile";
@@ -46,50 +47,12 @@ export default async function Home() {
 
   return (
     <main>
-      {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 sm:px-6 md:grid-cols-2 md:pt-20">
-        <div className="flex flex-col gap-6">
-          <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
-            Horta · Cozinha · Casa
-          </p>
-          <h1 className="text-4xl sm:text-6xl">
-            Alimentar é uma forma de cuidar.
-          </h1>
-          <p className="text-ink-600 max-w-prose text-lg">
-            Da nossa horta e da cozinha da Chef Angela para a sua mesa:
-            refeições prontas, cestas da semana e receitas para a família
-            inteira comer melhor sem complicar a rotina.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/box"
-              className="bg-forest-900 text-cream-50 hover:bg-forest-700 min-h-11 rounded-(--radius-control) px-6 py-3 font-medium"
-            >
-              Montar meu BOX
-            </Link>
-            <Link
-              href="/loja"
-              className="border-forest-900 text-forest-900 hover:bg-sand-200 min-h-11 rounded-(--radius-control) border px-6 py-3 font-medium"
-            >
-              Ver a loja
-            </Link>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Photo
-            src={SITE_PHOTOS.saladaNoPote1.url}
-            alt={SITE_PHOTOS.saladaNoPote1.alt}
-            priority
-          />
-          <Photo
-            src={STATIC_COVERS["farofa-nutritiva-de-soja"].url}
-            alt={STATIC_COVERS["farofa-nutritiva-de-soja"].alt}
-            ratio="4/5"
-            priority
-            className="mt-10"
-          />
-        </div>
-      </section>
+      {/* Abertura: palco 3D com versão em fotos de reserva (D-034) */}
+      <HomeStage
+        saladPhoto={SITE_PHOTOS.saladaNoPote1}
+        saladPhotoAlt={SITE_PHOTOS.saladaNoPote2}
+        farofaPhoto={STATIC_COVERS["farofa-nutritiva-de-soja"]}
+      />
 
       {/* Proposta de valor */}
       <section

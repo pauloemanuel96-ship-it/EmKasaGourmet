@@ -53,3 +53,8 @@
 - 🟠 Datas e prazo de encomenda de cada campanha (Natal, Ano-Novo, Páscoa, Dia das Mães, Eventos corporativos).
 - 🟠 Épocas (meses) dos itens da Horta e Naturais.
 - ⚪ O fim da mensagem com a lista chegou cortado em "Antes de implementar, analisar a…": reenviar o trecho final.
+
+## Abertura 3D da home (15/11/2026)
+- 🟠 Ingredientes da salada no pote: a ilustração usa molho, grão-de-bico, cenoura ralada, repolho roxo, pepino, brócolis, alface e tomate-cereja. Confirmar a lista real (ajuste em `src/components/loja/home-stage/ingredients.ts`).
+- 🟠 "Monte do seu jeito": hoje é só a ideia na vitrine. Definir se a salada personalizada vira produto de verdade (opções, preço, como pedir).
+- ⚪ Rótulo da Farofa: há duas versões nas fotos (faixa laranja e faixa vermelha) e o pote 3D mostra uma de cada lado. Informar qual é a atual.
