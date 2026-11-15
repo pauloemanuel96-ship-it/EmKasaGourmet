@@ -154,3 +154,26 @@ export function toStoreProduct(
     comingSoon: false,
   };
 }
+
+export type MediaRow = {
+  product_slug: string;
+  path: string;
+  alt: string;
+  is_cover: boolean;
+  sort_order: number;
+};
+
+/** Fotos que não são a principal, por produto, já em ordem. */
+export function galleryBySlug(rows: MediaRow[], supabaseUrl: string) {
+  const out = new Map<string, { url: string; alt: string }[]>();
+  for (const r of rows) {
+    if (r.is_cover) continue;
+    const list = out.get(r.product_slug) ?? [];
+    list.push({
+      url: `${supabaseUrl}/storage/v1/object/public/${PHOTO_BUCKET}/${r.path}`,
+      alt: r.alt,
+    });
+    out.set(r.product_slug, list);
+  }
+  return out;
+}

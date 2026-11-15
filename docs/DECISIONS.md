@@ -123,3 +123,6 @@ A loja lê `v_store_catalog`. Sem nenhum produto ativo no banco, mostra os dados
 
 ## D-032 — Formulários do painel enviam por `onSubmit` · **Aceita**
 O React 19 limpa o formulário depois de uma `<form action>`. Num erro de validação a pessoa perderia o que digitou. Os formulários do painel chamam a Server Action por `onSubmit` + `startTransition`, e o servidor continua validando com Zod e com a função SQL. Preço é digitado em reais ("24,90") e convertido para centavos sem ponto flutuante (`parseBRLToCents`).
+
+## D-033 — Fotos no Supabase Storage, convertidas para WebP · **Aceita**
+Bucket público `produtos` (5 MB, só imagem). Só a administração envia, troca e apaga (RLS em `storage.objects`); o banco guarda só caminho, texto alternativo e tipo (`product_media`), e `admin_attach_media` confere que o arquivo existe. Upload: o navegador converte para WebP de até 1600 px antes de subir. Link: o servidor só baixa de domínios do GitHub (lista fechada, sem seguir redirecionamento, 20 MB, 20 s) e converte com `sharp`. Importação em lote casa nome de arquivo e produto e nunca escolhe sozinho em caso de dúvida. O assistente põe foto com confirmação e só responde "pronto" depois do banco confirmar.

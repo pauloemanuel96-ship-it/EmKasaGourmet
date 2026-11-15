@@ -5,7 +5,9 @@ import { SEED_SECTIONS, demoCatalog } from "@/demo/store-catalog";
 import { publicEnv } from "@/lib/env";
 import {
   buildSections,
+  galleryBySlug,
   toStoreProduct,
+  type MediaRow,
   type CatalogRow,
   type CategoryRow,
 } from "./store-mapping";
@@ -35,7 +37,7 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
-  const [categories, catalog, whatsapp] = await Promise.all([
+  const [categories, catalog, whatsapp, media] = await Promise.all([
     supabase
       .from("v_store_categories")
       .select(
@@ -47,6 +49,10 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
       .select("value")
       .eq("key", "whatsapp_number")
       .maybeSingle(),
+    supabase
+      .from("v_store_media")
+      .select("product_slug, path, alt, is_cover, sort_order")
+      .order("sort_order"),
   ]);
 
   if (categories.error || catalog.error) {
@@ -69,8 +75,17 @@ export async function getStoreCatalog(): Promise<StoreCatalog> {
     return { ...demoCatalog(sections), whatsapp: number };
   }
 
+  // Galeria (fotos além da principal). Sem a view (migration 0007 ainda não
+  // aplicada), segue só com a foto principal.
+  const gallery = galleryBySlug(
+    media.error ? [] : ((media.data ?? []) as MediaRow[]),
+    env.NEXT_PUBLIC_SUPABASE_URL,
+  );
   const products = rows
     .map((r) => toStoreProduct(r, env.NEXT_PUBLIC_SUPABASE_URL))
+    .map((p) =>
+      gallery.has(p.slug) ? { ...p, gallery: gallery.get(p.slug)! } : p,
+    )
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   return { source: "banco", products, sections, whatsapp: number };
 }

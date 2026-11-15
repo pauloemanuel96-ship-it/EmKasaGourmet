@@ -16,7 +16,7 @@
 | Loja: home, loja, produto, encomendas | ✅ Lê o banco (2b.3) | Demonstração só sem produto ativo, sempre com selo DEMO. |
 | Loja: carrinho, checkout, BOX, clube, Minha Casa, receitas, escola | ⚠️ Demonstração | Checkout sem cobrança; BOX, clube, receitas e escola ainda usam `src/demo`. |
 | Checkout / pagamento | ⚠️ Simulado | Sem Mercado Pago. Nenhuma cobrança real é possível hoje (correto). |
-| Fotos de produto | ❌ Não existe | Tabela `product_media` existe, mas não há bucket no Storage, upload nem tela. A loja desenha ilustrações (`product-art.tsx`). |
+| Fotos de produto | ✅ Storage + painel (0007) | Upload, link do GitHub, lote, biblioteca e assistente. |
 | Banners, Quem Somos, conteúdo editável | ❌ Não existe | Textos da home estão no código. |
 | Encomendas e Confraternizações (página pública) | ✅ `/encomendas` (2b.4) | Orçamento pelo WhatsApp configurado no painel. |
 | Assistente operacional | ⚠️ Regras fixas | `src/demo/logic.ts` interpreta frases com regras e age só nos dados fictícios. Não usa IA nem o banco. |
@@ -51,3 +51,4 @@
 | 2b.1 | Painel de Produtos e Categorias gravando no banco. |
 | 2b.2 | Painel de Ingredientes, Campanhas e Configurações (WhatsApp). Auditoria e plano das novas frentes. |
 | 2b.3 + 2b.4 | Loja lendo do banco com demonstração marcada; página de Encomendas; filtros recolhidos no celular; título que estourava a tela em 360 px corrigido. |
+| Mídia (0007) | Bucket `produtos`, fotos no produto, Biblioteca de Mídia, importação em lote, foto pelo assistente. |

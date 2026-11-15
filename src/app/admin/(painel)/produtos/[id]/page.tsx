@@ -5,6 +5,8 @@ import { z } from "zod";
 import { ActionButton } from "@/components/admin/catalogo/action-button";
 import { Badge } from "@/components/admin/catalogo/fields";
 import { ProductForm } from "@/components/admin/catalogo/product-form";
+import { PhotoManager } from "@/components/admin/midia/photo-manager";
+import { getProductMedia } from "@/modules/midia/queries";
 import { AdminPage } from "@/components/admin/page-shell";
 import { validateProductAllergens } from "@/modules/catalogo/actions";
 import {
@@ -41,10 +43,11 @@ async function EditProduct({
   const [{ id }, { salvo }] = await Promise.all([params, searchParams]);
   if (!z.uuid().safeParse(id).success) notFound();
 
-  const [found, categories, options] = await Promise.all([
+  const [found, categories, options, media] = await Promise.all([
     getProduct(id),
     listCategories(),
     getProductFormOptions(),
+    getProductMedia(id),
   ]);
   if (!found) notFound();
   const { product, sheet } = found;
@@ -108,6 +111,13 @@ async function EditProduct({
           />
         </div>
       </div>
+
+      <PhotoManager
+        productId={product.id}
+        productSlug={product.slug}
+        productName={product.name}
+        media={media}
+      />
 
       <ProductForm
         key={product.id}
