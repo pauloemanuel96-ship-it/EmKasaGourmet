@@ -183,3 +183,11 @@ Atualizado **somente** pelo trigger `after insert on inventory_movements`. Const
 | `available_delivery_dates(zone_id, from)` | dias × prazo de corte × bloqueios × capacidade |
 
 Cada função tem teste em `tests/db` (D-017) cobrindo: saldo insuficiente, concorrência (dois pedidos no último item), webhook duplicado e expiração.
+
+## 12. Acréscimos da migration 0006
+- `categories`: `kind ('loja'|'encomendas')`, `description`, `is_featured`. Triggers de herança (canal e área) e bloqueio de ciclo.
+- `products`: `quote_only`. `sale_unit` ganhou `duzia, cacho, bandeja, litro, kit, combo`.
+- `allergens.filter_group` · `diet_label_blockers (label_id, allergen_id, include_may_contain)`.
+- `campaigns (slug, name, description, starts_on, ends_on, order_deadline, is_active, sort_order)` · `product_campaigns`.
+- Views públicas (somente leitura): `v_store_categories` (árvore visível, com `root_slug`, `path_names`, `depth`) e `v_store_catalog` (produto ativo em categoria visível, com `channel`, `is_available`, `in_season`, `ingredients`, `contains`, `may_contain`, `blocked_groups`, `diet_labels`, `campaigns`, `cover`).
+- Funções do painel: ver D-029.

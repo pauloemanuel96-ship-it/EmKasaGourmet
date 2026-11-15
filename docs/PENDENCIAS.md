@@ -44,3 +44,12 @@
 - ⚪ Composição e preço-base de cada BOX; política de substituição.
 - ⚪ Interesse real em B2B: há empresas para testar um piloto?
 - ⚪ Cursos: formato, preço, gravação.
+
+## Catálogo (lista recebida em 15/11/2026)
+- ✅ Categorias e nomes de produtos informados. A árvore de categorias já está no banco.
+- 🔴 Para cada produto da lista: unidade de venda, preço, ingredientes e "pode conter". Sem isso ele não pode ser publicado.
+- 🔴 Sabores dos Blends Veganos e variedades das Almôndegas.
+- 🟠 Cardápio das ceias (Natural e Tradicional): pratos, combos, para quantas pessoas servem, preço ou "sob orçamento".
+- 🟠 Datas e prazo de encomenda de cada campanha (Natal, Ano-Novo, Páscoa, Dia das Mães, Eventos corporativos).
+- 🟠 Épocas (meses) dos itens da Horta e Naturais.
+- ⚪ O fim da mensagem com a lista chegou cortado em "Antes de implementar, analisar a…": reenviar o trecho final.

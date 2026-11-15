@@ -102,3 +102,21 @@ A licença que veio com o logo permite uso comercial e incorporação em arquivo
 
 ## D-025 — Nutricionistas parceiras sem comissão por produto · **Proposta (validar com CRN e advogado)**
 O Código de Ética do CFN (Resolução 856/2026), segundo o resumo consultado, veda vincular marca à prescrição individual e receber vantagens de empresas do setor. Modelo de receita: mensalidade da profissional pela agenda ou assinatura premium do cliente. O plano cita alimentos, não produtos; o cruzamento com o catálogo é da plataforma, por regra determinística.
+
+## D-026 — Catálogo em árvore de categorias, com canal · **Aceita (pedido do Paulo, 15/11/2026)**
+As categorias de primeiro nível são as seções da loja. `categories.kind` diz o canal da árvore inteira: `loja` (carrinho) ou `encomendas` (página "Encomendas e Confraternizações", com pedido de orçamento). Subcategoria herda canal e área da mãe (trigger). Desativar uma categoria esconde a árvore inteira do visitante sem apagar nada. A árvore inicial usa os nomes informados pela Emkasa e está na migration 0006; produtos **não** foram criados (faltam preço, unidade e ficha).
+
+## D-027 — Variedades são produtos dentro de uma subcategoria · **Proposta**
+Cada sabor ou variedade (Blends Veganos, Almôndegas) é um produto próprio dentro da subcategoria. **Por quê:** sabores têm ingredientes diferentes, logo alergênicos, preço e estoque diferentes. Um seletor de sabor na página do produto pode vir depois, sem mudar o banco.
+
+## D-028 — Produto "sob orçamento" · **Aceita**
+`products.quote_only` permite ativar um produto sem preço fixo. Usado em Encomendas. Fora disso, produto ativo continua exigindo preço e categoria.
+
+## D-029 — O painel grava por função SQL transacional · **Aceita**
+`admin_save_product`, `admin_save_category`, `admin_save_ingredient`, `admin_save_campaign` e `admin_set_product_status` gravam tudo em uma transação e rodam com as permissões de quem chama (o RLS continua valendo). A Server Action só valida com Zod e chama a função. Operação cria rascunho simples; ficha técnica, rótulos, campanhas e publicação são da administração. Testes em `tests/db/catalog.test.ts`.
+
+## D-030 — Grupos de filtro e rótulos incompatíveis · **Aceita (validar com responsável técnico)**
+`allergens.filter_group` agrupa para os filtros "sem X": glúten cobre trigo, centeio, cevada e aveia; leite cobre lactose; castanhas cobre cada castanha listada. `diet_label_blockers` impede rótulo que contraria a ficha ("sem glúten" com trigo; "vegano" com leite ou ovos). Na loja, rótulo só aparece se aprovado, com a ficha de alergênicos validada e sem alergênico incompatível.
+
+## D-031 — Demonstração só enquanto não houver produto real · **Proposta (a implementar)**
+A loja lê `v_store_catalog`. Sem nenhum produto ativo no banco, mostra os dados de demonstração; a partir do primeiro produto ativo, mostra só os reais. Nunca mistura os dois.

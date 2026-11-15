@@ -75,3 +75,15 @@ Critérios detalhados ao fim da fase anterior, com base no uso real.
 
 **Fora do Sprint 1:** carrinho, pagamento, entregas, IA, BOX.
 **Próximo (Sprint 2):** upload de fotos, tela "Hoje", busca, home editorial, histórico de estoque.
+
+### Módulo 2 dividido em duas entregas (15/11/2026)
+**2a ✅ Banco (migration 0006):** árvore de categorias com os nomes da Emkasa, canal loja/encomendas, unidades de venda extras, produto sob orçamento, campanhas (Natal, Ano-Novo, Páscoa, Dia das Mães, Eventos corporativos: desligadas e sem datas), grupos de filtro de alergênicos, rótulos incompatíveis, views `v_store_categories` e `v_store_catalog`, funções de gravação do painel e 19 testes.
+
+**2b ⏳ Telas (próxima entrega), nesta ordem:**
+1. `src/modules/catalogo`: tipos, leitura pública com `use cache` + `cacheTag('catalogo')`, reserva de demonstração (D-031), Server Actions com Zod chamando as funções da D-029 e `updateTag('catalogo')`.
+2. Painel: Produtos (lista e formulário com categoria, unidade, preço ou sob orçamento, disponibilidade, época, ingredientes, "pode conter", rótulos com evidência, campanhas, validar ficha), Categorias (criar, editar, ativar/desativar, subcategorias), Ingredientes, Campanhas, WhatsApp de atendimento em `settings`.
+3. Dados de demonstração com as categorias e os nomes reais informados pela Emkasa; preço, unidade e estoque marcados DEMO; sem ingredientes nem ficha validada inventados; variedades de exemplo marcadas `[DEMO]`. Ajustar BOX, receitas, clube e testes do assistente que hoje usam produtos inventados.
+4. Loja por categoria (seções = categorias-raiz, subcategorias como filtros), página do produto e nova página `/encomendas` com as duas linhas de ceia em destaque, as demais ocasiões, campanhas e pedido de orçamento (pelo WhatsApp quando o número estiver cadastrado; sem guardar dados pessoais). Aba "Encomendas" em destaque no menu e no centro da barra inferior.
+5. Visual leve: fundo mais claro, verde-oliva do logo nos botões, a fita amarelo-laranja do K como único gesto gráfico, ilustrações em traço por categoria no lugar de foto, botão "+" no cartão, pílula flutuante do carrinho, transição do cartão para a página do produto (`ViewTransition` do React 19.3).
+
+**Fica para depois de 2b:** fotos (bucket no Storage e envio pelo painel), tela Hoje real com saldo, pedido de orçamento gravado no banco (depende da política de privacidade).
