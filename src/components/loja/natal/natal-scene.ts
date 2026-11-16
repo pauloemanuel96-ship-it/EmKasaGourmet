@@ -8,6 +8,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 
 export type NatalHandle = {
   cycleLights(): LightMode;
+  closeGifts(): void;
   setActive(active: boolean): void;
   resize(): void;
   dispose(): void;
@@ -47,7 +48,11 @@ function dotTexture(inner: string, outer: string) {
 
 export function createNatalScene(
   canvas: HTMLCanvasElement,
-  opts: { reducedMotion: boolean },
+  opts: {
+    reducedMotion: boolean;
+    /** Avisa a página quando um presente abre ou fecha. */
+    onGift?: (index: number, open: boolean) => void;
+  },
 ): NatalHandle {
   const rand = rng(20261225);
   const renderer = new THREE.WebGLRenderer({
@@ -115,83 +120,182 @@ export function createNatalScene(
   ground.receiveShadow = true;
   world.add(ground);
 
-  /* árvore: camadas de cone com a barra recortada e as pontas mais claras */
-  const TIERS = 6;
-  const tiers: { y0: number; y1: number; r: number }[] = [];
-  const dark = new THREE.Color("#0f3d24");
-  const tip = new THREE.Color("#2f7a45");
-  const frost = new THREE.Color("#dfeee6");
-  const treeMat = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.85,
-    flatShading: true,
-  });
-  for (let i = 0; i < TIERS; i++) {
-    const f = i / (TIERS - 1);
-    const r = 1.85 - f * 1.35;
-    const h = 1.35 - f * 0.35;
-    const y0 = 0.75 + i * 0.72;
-    const g = new THREE.ConeGeometry(r, h, 44, 6, true);
-    const p = g.attributes.position;
-    const colors = new Float32Array(p.count * 3);
-    const c = new THREE.Color();
-    for (let k = 0; k < p.count; k++) {
-      const x = p.getX(k);
-      const y = p.getY(k);
-      const z = p.getZ(k);
-      const a = Math.atan2(z, x);
-      const low = clamp((h / 2 - y) / h); // 0 no topo, 1 na barra
-      const wob =
-        1 +
-        low * (0.1 * Math.sin(a * 11 + i) + 0.06 * Math.sin(a * 23 + i * 2));
-      p.setXYZ(
-        k,
-        x * wob,
-        y - low * low * 0.12 * (1 + Math.sin(a * 11 + i)),
-        z * wob,
-      );
-      c.copy(dark).lerp(tip, low * 0.85);
-      if (low > 0.86) c.lerp(frost, (low - 0.86) * 4.5);
-      colors[k * 3] = c.r;
-      colors[k * 3 + 1] = c.g;
-      colors[k * 3 + 2] = c.b;
-    }
-    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    g.computeVertexNormals();
-    const m = new THREE.Mesh(g, treeMat);
-    m.position.y = y0 + h / 2;
-    m.castShadow = true;
-    m.receiveShadow = true;
-    tree.add(m);
-    tiers.push({ y0, y1: y0 + h, r });
-  }
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.26, 0.9, 12),
-    new THREE.MeshStandardMaterial({ color: 0x5b3a22, roughness: 0.9 }),
-  );
-  trunk.position.y = 0.45;
-  trunk.castShadow = true;
-  tree.add(trunk);
-  const TOP = tiers[TIERS - 1].y1;
-
-  /** Ponto na superfície da árvore: t de 0 (base) a 1 (topo), a = ângulo. */
-  const surf = new THREE.Vector3();
-  function onTree(t: number, a: number, push = 0.02) {
-    const i = Math.min(TIERS - 1, Math.floor(t * TIERS));
-    const tr = tiers[i];
-    const k = clamp(t * TIERS - i, 0.12, 0.8);
-    const r = tr.r * (1 - k) + push;
-    return surf.set(
-      Math.cos(a) * r,
-      tr.y0 + k * (tr.y1 - tr.y0) * 0.9,
-      Math.sin(a) * r,
-    );
-  }
-
-  /* enfeites */
+  /* árvore: tronco, miolo escuro e ramos de pinheiro com agulhas de verdade */
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
-  const BALLS = 54;
+
+  /** Um ramo (comprimento 1 no eixo X) com galhinhos laterais e agulhas. */
+  function boughGeometry() {
+    const pos: number[] = [];
+    const colr: number[] = [];
+    const dark = new THREE.Color("#0b2e1c");
+    const tipC = new THREE.Color("#2f8a4c");
+    const frost = new THREE.Color("#eaf4ef");
+    const wood = new THREE.Color("#4a2f1c");
+    const A = new THREE.Vector3();
+    const B = new THREE.Vector3();
+    const side = new THREE.Vector3();
+    const c = new THREE.Color();
+    const quad = (
+      a: THREE.Vector3,
+      b: THREE.Vector3,
+      w: THREE.Vector3,
+      ca: THREE.Color,
+      cb: THREE.Color,
+    ) => {
+      pos.push(
+        a.x - w.x,
+        a.y - w.y,
+        a.z - w.z,
+        a.x + w.x,
+        a.y + w.y,
+        a.z + w.z,
+        b.x,
+        b.y,
+        b.z,
+      );
+      colr.push(ca.r, ca.g, ca.b, ca.r, ca.g, ca.b, cb.r, cb.g, cb.b);
+    };
+    // galho: origem, direção (unitária no plano XZ), comprimento, nº de agulhas
+    const twig = (
+      ox: number,
+      oz: number,
+      dx: number,
+      dz: number,
+      len: number,
+      n: number,
+      size: number,
+    ) => {
+      const perp = new THREE.Vector3(-dz, 0, dx);
+      A.set(ox, 0, oz);
+      B.set(ox + dx * len, 0, oz + dz * len);
+      quad(A, B, side.set(0, 0.012, 0), wood, wood);
+      quad(A, B, side.copy(perp).multiplyScalar(0.012), wood, wood);
+      for (let k = 0; k < n; k++) {
+        const t = 0.04 + (k / n) * 0.96;
+        const phi = k * 2.39996;
+        const up = Math.cos(phi) * 0.6; // ramo mais achatado que redondo
+        const out = Math.sin(phi);
+        const l = size * (1 - 0.5 * t) * (0.8 + rand() * 0.4);
+        A.set(ox + dx * len * t, 0, oz + dz * len * t);
+        const fx = dx * 0.75 + perp.x * out * 0.66;
+        const fz = dz * 0.75 + perp.z * out * 0.66;
+        B.set(A.x + fx * l, up * l, A.z + fz * l);
+        side.set(-fz, 0, fx).normalize().multiplyScalar(0.019);
+        c.copy(dark).lerp(tipC, 0.55 + rand() * 0.45);
+        if (up > 0.2) c.lerp(frost, 0.5 * up * t); // neve só no que aponta para cima
+        quad(A, B, side, dark, c);
+      }
+    };
+    twig(0, 0, 1, 0, 1, 170, 0.3);
+    for (const s of [1, -1]) {
+      twig(0.3, 0, Math.cos(0.75), s * Math.sin(0.75), 0.55, 80, 0.26);
+      twig(0.6, 0, Math.cos(0.65), s * Math.sin(0.65), 0.34, 50, 0.22);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(colr, 3));
+    g.computeVertexNormals();
+    return g;
+  }
+
+  const WHORLS = 18;
+  type Spot = {
+    tip: THREE.Vector3;
+    mid: THREE.Vector3;
+    f: number;
+    yaw: number;
+  };
+  const spots: Spot[] = [];
+  const boughMats: THREE.Matrix4[] = [];
+  for (let i = 0; i < WHORLS; i++) {
+    const f = i / (WHORLS - 1);
+    const y = 0.8 + f * 4.5;
+    const len = (2.0 * Math.pow(1 - f, 0.9) + 0.3) * (i % 2 ? 0.66 : 1);
+    const n = Math.round(10 - 5 * f);
+    const pitch = -0.3 + f * 0.95 + (i % 2 ? 0.22 : 0);
+    for (let k = 0; k < n; k++) {
+      const yaw = (k / n) * Math.PI * 2 + i * 0.83 + (rand() - 0.5) * 0.25;
+      const thick = 0.78 + 0.5 * (len / 2.3);
+      dummy.position.set(0, y + (rand() - 0.5) * 0.34, 0);
+      dummy.rotation.set(0, yaw, pitch + (rand() - 0.5) * 0.3, "YZX");
+      dummy.scale.set(len * (0.9 + rand() * 0.2), thick, thick);
+      dummy.updateMatrix();
+      boughMats.push(dummy.matrix.clone());
+      spots.push({
+        tip: new THREE.Vector3(0.93, -0.02, 0).applyMatrix4(dummy.matrix),
+        mid: new THREE.Vector3(0.55, -0.02, 0).applyMatrix4(dummy.matrix),
+        f,
+        yaw,
+      });
+    }
+  }
+  const boughs = new THREE.InstancedMesh(
+    boughGeometry(),
+    new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.8,
+      side: THREE.DoubleSide,
+    }),
+    boughMats.length,
+  );
+  boughMats.forEach((m, i) => {
+    boughs.setMatrixAt(i, m);
+    boughs.setColorAt(i, col.setScalar(0.8 + rand() * 0.35));
+  });
+  // A sombra no chão vem de um cone invisível: bem mais leve que sombrear cada agulha.
+  const shade = new THREE.Mesh(
+    new THREE.ConeGeometry(1.9, 5, 20).translate(0, 3.2, 0),
+    new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }),
+  );
+  shade.castShadow = true;
+  tree.add(shade);
+  boughs.receiveShadow = true;
+  boughs.frustumCulled = false;
+  tree.add(boughs);
+  const TOP = 5.75;
+  const core = new THREE.Mesh(
+    new THREE.ConeGeometry(0.72, TOP - 0.6, 16, 1, true).translate(
+      0,
+      (TOP - 0.6) / 2 + 0.6,
+      0,
+    ),
+    new THREE.MeshStandardMaterial({ color: 0x0d2f1a, roughness: 1 }),
+  );
+  tree.add(core);
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.17, 0.27, 1.1, 12),
+    new THREE.MeshStandardMaterial({ color: 0x4a2f1c, roughness: 0.95 }),
+  );
+  trunk.position.y = 0.55;
+  trunk.castShadow = true;
+  tree.add(trunk);
+
+  /* neve pousada nos ramos */
+  {
+    const clumps = spots.filter((_, i) => i % 2 === 0);
+    const snowy = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(1, 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0xf4f8fb, roughness: 0.9 }),
+      clumps.length,
+    );
+    clumps.forEach((sp, i) => {
+      dummy.position.copy(sp.mid);
+      dummy.position.y += 0.05;
+      dummy.rotation.set(0, sp.yaw, 0);
+      const k = 0.7 + rand() * 0.6;
+      dummy.scale.set(0.2 * k, 0.045 * k, 0.11 * k);
+      dummy.updateMatrix();
+      snowy.setMatrixAt(i, dummy.matrix);
+    });
+    snowy.castShadow = true;
+    tree.add(snowy);
+  }
+
+  /* enfeites pendurados nas pontas: bolas, pinhas, bengalas e laços */
+  const hang = spots.filter((sp) => sp.f < 0.93);
+  const pick = (i: number) => hang[(i * 7 + 3) % hang.length];
+  const BALLS = Math.min(46, hang.length);
   const balls = new THREE.InstancedMesh(
     new THREE.SphereGeometry(0.105, 24, 18),
     new THREE.MeshPhysicalMaterial({
@@ -208,14 +312,14 @@ export function createNatalScene(
     "#f4ead2",
     "#c5162c",
     "#e2b33a",
-    "#1f6f4a",
+    "#8a1c2c",
   ];
   const ballData = Array.from({ length: BALLS }, (_, i) => {
-    const t = 0.03 + (i / BALLS) * 0.9;
-    const a = i * 2.39996 + rand() * 0.4;
-    const p = onTree(t, a, 0.05).clone();
+    const sp = pick(i);
+    const p = (i % 3 === 0 ? sp.mid : sp.tip).clone();
+    p.y -= 0.15;
     balls.setColorAt(i, col.set(ballTones[i % ballTones.length]));
-    return { p, s: 0.8 + rand() * 0.5 * (1 - t * 0.5), bounce: 0 };
+    return { p, s: 1.25 - sp.f * 0.55 + rand() * 0.25, bounce: 0 };
   });
   balls.castShadow = true;
   tree.add(balls);
@@ -230,18 +334,136 @@ export function createNatalScene(
   }
   ballData.forEach((_, i) => writeBall(i));
 
-  /* pisca-pisca: lâmpadas em espiral, com brilho aditivo por cima */
-  const BULBS = 90;
+  function hangMany(
+    geo: THREE.BufferGeometry,
+    mat: THREE.Material,
+    n: number,
+    offset: number,
+    drop: number,
+    scale: number,
+  ) {
+    const m = new THREE.InstancedMesh(geo, mat, n);
+    for (let i = 0; i < n; i++) {
+      const sp = hang[(i * 11 + offset) % hang.length];
+      dummy.position.copy(sp.tip).multiplyScalar(0.86);
+      dummy.position.y = sp.tip.y - drop;
+      dummy.rotation.set(
+        (rand() - 0.5) * 0.3,
+        sp.yaw + rand(),
+        (rand() - 0.5) * 0.3,
+      );
+      dummy.scale.setScalar(scale * (0.85 + rand() * 0.35));
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    }
+    m.castShadow = true;
+    tree.add(m);
+  }
+  // pinhas
+  {
+    const g = new THREE.IcosahedronGeometry(0.1, 3);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i);
+      const y = p.getY(i);
+      const z = p.getZ(i);
+      const a = Math.atan2(z, x);
+      const s =
+        (1 + 0.16 * Math.sin(a * 8 + y * 60) * Math.sin(y * 70)) *
+        (1 - 0.35 * Math.max(0, y / 0.1));
+      p.setXYZ(i, x * s, y * 1.7, z * s);
+    }
+    g.computeVertexNormals();
+    hangMany(
+      g,
+      new THREE.MeshStandardMaterial({
+        color: 0x6b4426,
+        roughness: 0.9,
+        flatShading: true,
+      }),
+      10,
+      5,
+      0.2,
+      1,
+    );
+  }
+  // bengalas doces
+  {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 8; i++)
+      pts.push(new THREE.Vector3(0, -0.34 + (i / 8) * 0.3, 0));
+    for (let i = 1; i <= 8; i++) {
+      const a = (i / 8) * Math.PI;
+      pts.push(
+        new THREE.Vector3(
+          0.06 - Math.cos(a) * 0.06,
+          -0.04 + Math.sin(a) * 0.06,
+          0,
+        ),
+      );
+    }
+    const stripes = document.createElement("canvas");
+    stripes.width = 64;
+    stripes.height = 64;
+    const sg = stripes.getContext("2d");
+    if (sg) {
+      sg.fillStyle = "#f7f3ea";
+      sg.fillRect(0, 0, 64, 64);
+      sg.strokeStyle = "#c5162c";
+      sg.lineWidth = 9;
+      for (let i = -64; i < 128; i += 22) {
+        sg.beginPath();
+        sg.moveTo(i, 0);
+        sg.lineTo(i + 64, 64);
+        sg.stroke();
+      }
+    }
+    const st = new THREE.CanvasTexture(stripes);
+    st.colorSpace = THREE.SRGBColorSpace;
+    st.wrapS = st.wrapT = THREE.RepeatWrapping;
+    st.repeat.set(7, 1);
+    hangMany(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.022, 8),
+      new THREE.MeshPhysicalMaterial({
+        map: st,
+        roughness: 0.25,
+        clearcoat: 1,
+      }),
+      10,
+      2,
+      0.02,
+      1.15,
+    );
+  }
+  // laços
+  hangMany(
+    new THREE.TorusKnotGeometry(0.07, 0.022, 48, 8, 2, 3).rotateX(Math.PI / 2),
+    new THREE.MeshStandardMaterial({
+      color: 0xb3202a,
+      roughness: 0.35,
+      metalness: 0.3,
+    }),
+    8,
+    8,
+    0.06,
+    1.2,
+  );
+
+  /* pisca-pisca: lâmpadas nas pontas e no meio dos ramos, com brilho aditivo */
+  const bulbSpots: THREE.Vector3[] = [];
+  spots.forEach((sp, i) => {
+    bulbSpots.push(sp.tip.clone().setY(sp.tip.y + 0.05));
+    if (i % 2 === 0) bulbSpots.push(sp.mid.clone().setY(sp.mid.y + 0.07));
+  });
+  const BULBS = bulbSpots.length;
   const bulbs = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(0.038, 10, 8),
+    new THREE.SphereGeometry(0.036, 10, 8),
     new THREE.MeshBasicMaterial({ toneMapped: false }),
     BULBS,
   );
   const haloPos = new Float32Array(BULBS * 3);
   const haloCol = new Float32Array(BULBS * 3);
-  const bulbData = Array.from({ length: BULBS }, (_, i) => {
-    const t = 0.02 + (i / BULBS) * 0.95;
-    const p = onTree(t, t * Math.PI * 2 * 7.5, 0.07).clone();
+  const bulbData = bulbSpots.map((p, i) => {
     dummy.position.copy(p);
     dummy.rotation.set(0, 0, 0);
     dummy.scale.setScalar(1);
@@ -259,7 +481,7 @@ export function createNatalScene(
     haloGeo,
     new THREE.PointsMaterial({
       map: haloTex,
-      size: 0.42,
+      size: 0.4,
       vertexColors: true,
       transparent: true,
       depthWrite: false,
@@ -319,9 +541,11 @@ export function createNatalScene(
     want: number;
     root: THREE.Group;
     top: number;
+    orb: THREE.Sprite;
   };
   const gifts: Gift[] = [];
   const giftHit: THREE.Mesh[] = [];
+  const orbTex = dotTexture("rgba(255,244,200,1)", "rgba(255,200,90,.5)");
   function gift(
     x: number,
     z: number,
@@ -386,8 +610,19 @@ export function createNatalScene(
     lid.add(lidBox, l1, l2, bow);
     lid.position.y = h + h * 0.1;
     root.add(lid);
+    const orb = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: orbTex,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+        opacity: 0,
+      }),
+    );
+    orb.scale.setScalar(0.9);
+    root.add(orb);
     world.add(root);
-    gifts.push({ lid, open: 0, want: 0, root, top: h + h * 0.1 });
+    gifts.push({ lid, open: 0, want: 0, root, top: h + h * 0.1, orb });
   }
   gift(1.75, 1.15, 0.75, 0.62, 0xb3202a, 0xe8c66a, 0.4);
   gift(-1.7, 1.3, 0.62, 0.5, 0xf2ead8, 0xb3202a, -0.5);
@@ -483,9 +718,9 @@ export function createNatalScene(
     const tan = Math.tan((16 * Math.PI) / 180);
     if (wide) {
       // Computador: árvore à direita do texto.
-      const dist = 12.5;
-      camera.position.set(0, 3.2, dist);
-      camera.lookAt(0, 2.5, 0);
+      const dist = 13.8;
+      camera.position.set(0, 3.6, dist);
+      camera.lookAt(0, 3.05, 0);
       world.position.x = dist * tan * camera.aspect * 0.42;
     } else {
       // Celular: o palco é alto e a árvore ocupa a metade de baixo, sob o texto.
@@ -508,8 +743,14 @@ export function createNatalScene(
     const hitGift = ray.intersectObjects(giftHit, false)[0];
     const hitBall = ray.intersectObject(balls, false)[0];
     if (hitGift && (!hitBall || hitGift.distance < hitBall.distance)) {
-      const g = gifts[hitGift.object.userData.gift as number];
+      const gi = hitGift.object.userData.gift as number;
+      const g = gifts[gi];
+      // um presente aberto por vez
+      gifts.forEach((o, k) => {
+        if (k !== gi) o.want = 0;
+      });
       g.want = g.want ? 0 : 1;
+      opts.onGift?.(gi, g.want === 1);
       if (g.want) {
         g.root.getWorldPosition(tmp);
         tmp.y += g.top;
@@ -612,6 +853,11 @@ export function createNatalScene(
       g.lid.position.y = g.top + g.open * 0.55;
       g.lid.rotation.z = g.open * 0.5;
       g.lid.position.x = g.open * 0.18;
+      g.orb.material.opacity = g.open;
+      g.orb.position.y =
+        g.top +
+        g.open * 0.75 +
+        (still ? 0 : Math.sin(t * 2 + g.top * 9) * 0.05);
     }
 
     // faíscas
@@ -660,6 +906,12 @@ export function createNatalScene(
       }
       kick();
       return MODES[mode];
+    },
+    closeGifts() {
+      gifts.forEach((g) => {
+        g.want = 0;
+      });
+      kick();
     },
     setActive(a) {
       active = a;

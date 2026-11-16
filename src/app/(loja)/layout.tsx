@@ -3,10 +3,12 @@ import { BottomNav } from "@/components/loja/bottom-nav";
 import { DemoBanner } from "@/components/loja/demo-banner";
 import { SiteFooter } from "@/components/loja/site-footer";
 import { SiteHeader } from "@/components/loja/site-header";
+import { SplashScreen } from "@/components/loja/splash-screen";
 
 export default function LojaLayout({ children }: LayoutProps<"/">) {
   return (
     <>
+      <SplashScreen />
       <Suspense fallback={<div className="bg-forest-900 h-8" />}>
         <DemoBanner />
       </Suspense>

@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { LightMode, NatalHandle } from "./natal-scene";
 
+/** O que cada presente revela ao abrir (na ordem: vermelho, branco, verde). */
+export type GiftReveal = {
+  title: string;
+  text: string;
+  href: string;
+  cta: string;
+  external?: boolean;
+};
+
 const LIGHT_LABEL: Record<LightMode, string> = {
   quentes: "Luzes quentes",
   coloridas: "Luzes coloridas",
@@ -24,13 +33,20 @@ function daysToChristmas(now: Date) {
  * Abertura da página de Natal: árvore 3D atrás do texto (D-035).
  * Sem WebGL, fica só o fundo natalino em CSS, e o texto continua igual.
  */
-export function NatalStage({ children }: { children: React.ReactNode }) {
+export function NatalStage({
+  children,
+  gifts,
+}: {
+  children: React.ReactNode;
+  gifts: GiftReveal[];
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<NatalHandle | null>(null);
   const [live, setLive] = useState(false);
   const [mode, setMode] = useState<LightMode>("quentes");
   const [days, setDays] = useState<number | null>(null);
+  const [opened, setOpened] = useState<number | null>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() =>
@@ -64,6 +80,7 @@ export function NatalStage({ children }: { children: React.ReactNode }) {
         handle = createNatalScene(canvas, {
           reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)")
             .matches,
+          onGift: (index, open) => setOpened(open ? index : null),
         });
         handleRef.current = handle;
         setLive(true);
@@ -113,6 +130,47 @@ export function NatalStage({ children }: { children: React.ReactNode }) {
             </p>
           )}
         </div>
+        <div
+          aria-live="polite"
+          className="pointer-events-none fixed inset-x-4 bottom-20 z-40 flex justify-center md:inset-x-auto md:bottom-24 md:left-8"
+        >
+          {opened !== null && gifts[opened] && (
+            <div className="natal-reveal pointer-events-auto flex w-full max-w-sm flex-col gap-2 rounded-(--radius-media) border border-[#f3dfa2]/40 bg-[#08130d]/85 p-5 shadow-2xl backdrop-blur">
+              <p className="text-xs font-semibold tracking-widest text-[#f3dfa2] uppercase">
+                Você abriu
+              </p>
+              <p className="font-serif text-2xl text-[#faf6ee]">
+                {gifts[opened].title}
+              </p>
+              <p className="text-sm text-[#faf6ee]/80">{gifts[opened].text}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                <a
+                  href={gifts[opened].href}
+                  {...(gifts[opened].external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                  onClick={() => {
+                    handleRef.current?.closeGifts();
+                    setOpened(null);
+                  }}
+                  className="inline-flex min-h-10 items-center rounded-full bg-[#f3dfa2] px-5 text-sm font-semibold text-[#3d1216] active:scale-[0.97]"
+                >
+                  {gifts[opened].cta}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleRef.current?.closeGifts();
+                    setOpened(null);
+                  }}
+                  className="min-h-10 px-2 text-sm text-[#faf6ee]/70 underline underline-offset-4"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {live && (
           <div className="mt-auto flex flex-wrap items-center gap-3 pt-6 pb-20 md:pb-4">
             <button
@@ -138,7 +196,7 @@ export function NatalStage({ children }: { children: React.ReactNode }) {
               {LIGHT_LABEL[mode]}
             </button>
             <p className="rounded-full bg-[#08130d]/60 px-3 py-1.5 text-xs text-[#faf6ee]/85 backdrop-blur">
-              Arraste para girar. Toque nos enfeites e abra os presentes.
+              Arraste para girar. Abra os presentes para descobrir as ceias.
             </p>
           </div>
         )}

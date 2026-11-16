@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DemoTag } from "@/components/loja/demo-tag";
-import { NatalStage } from "@/components/loja/natal/natal-stage";
+import {
+  NatalStage,
+  type GiftReveal,
+} from "@/components/loja/natal/natal-stage";
 import { ProductImage } from "@/components/loja/product-image";
 import { formatCents } from "@/lib/money";
 import { getStoreCatalog } from "@/modules/catalogo/store";
@@ -99,9 +102,39 @@ export default async function NatalPage() {
       </span>
     );
 
+  // Cada presente da árvore revela algo de verdade: as ceias e a encomenda.
+  const menu: GiftReveal = {
+    title: "Cardápio de Natal",
+    text: "Veja o que já dá para encomendar.",
+    href: "#cardapio",
+    cta: "Ver o cardápio",
+  };
+  const ceiaGift = (i: number): GiftReveal =>
+    ceias[i]
+      ? {
+          title: ceias[i].name,
+          text: ceias[i].description ?? "Veja o cardápio desta ceia.",
+          href: `#ceia-${ceias[i].slug}`,
+          cta: "Ver esta ceia",
+        }
+      : menu;
+  const gifts: GiftReveal[] = [
+    ceiaGift(0),
+    ceiaGift(1),
+    wa
+      ? {
+          title: "Sua encomenda",
+          text: "Fale com a gente e monte a mesa do seu Natal.",
+          href: wa,
+          cta: "Pedir orçamento pelo WhatsApp",
+          external: true,
+        }
+      : menu,
+  ];
+
   return (
     <main className="bg-[#08130d] text-[#faf6ee]">
-      <NatalStage>
+      <NatalStage gifts={gifts}>
         <p
           className="text-xs font-semibold tracking-widest uppercase"
           style={{ color: GOLD }}
@@ -152,7 +185,8 @@ export default async function NatalPage() {
               return (
                 <article
                   key={c.slug}
-                  className="relative flex flex-col gap-4 overflow-hidden rounded-(--radius-media) border border-[#f3dfa2]/25 p-6 sm:p-8"
+                  id={`ceia-${c.slug}`}
+                  className="relative flex scroll-mt-24 flex-col gap-4 overflow-hidden rounded-(--radius-media) border border-[#f3dfa2]/25 p-6 sm:p-8"
                   style={{
                     background:
                       i % 2 === 0

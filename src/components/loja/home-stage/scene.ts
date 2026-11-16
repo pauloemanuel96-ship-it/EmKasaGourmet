@@ -298,12 +298,15 @@ export function createStage(
   key.shadow.camera.left = -2.6;
   key.shadow.camera.right = 2.6;
   key.shadow.camera.top = 3.2;
-  key.shadow.camera.bottom = -2.6;
+  key.shadow.camera.bottom = -3;
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 20;
   key.shadow.bias = -0.0012;
   key.shadow.normalBias = 0.02;
   scene.add(key, key.target);
+  const fillLight = new THREE.DirectionalLight(0xdfeaff, 0.7);
+  fillLight.position.set(-5, 2.5, 4);
+  scene.add(fillLight);
   const rim = new THREE.PointLight(0xfed216, 14, 18);
   rim.position.set(-4, 1.8, -2.5);
   scene.add(rim);
@@ -337,17 +340,52 @@ export function createStage(
     g.fillStyle = r;
     g.fillRect(0, 0, w, h);
   });
-  function contactShadow(size: number) {
+  /** Tábua de madeira onde o pote fica apoiado e recebe a sombra de verdade. */
+  const woodTex = canvasTexture(512, 512, (g, w, h) => {
+    g.fillStyle = "#b9834f";
+    g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 150; i++) {
+      const y = rand() * h;
+      g.strokeStyle = `rgba(${rand() > 0.5 ? "92,54,24" : "226,178,124"},${0.08 + rand() * 0.22})`;
+      g.lineWidth = 0.6 + rand() * 2.4;
+      g.beginPath();
+      g.moveTo(0, y);
+      g.bezierCurveTo(
+        w * 0.3,
+        y + (rand() - 0.5) * 22,
+        w * 0.7,
+        y + (rand() - 0.5) * 22,
+        w,
+        y + (rand() - 0.5) * 12,
+      );
+      g.stroke();
+    }
+    for (let k = 0; k < 3; k++) {
+      const cx = rand() * w;
+      const cy = rand() * h;
+      for (let r = 4; r < 30; r += 4) {
+        g.strokeStyle = "rgba(92,54,24,.22)";
+        g.lineWidth = 1.2;
+        g.beginPath();
+        g.ellipse(cx, cy, r * 1.9, r, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+    }
+  });
+  const woodMat = new THREE.MeshStandardMaterial({
+    map: woodTex,
+    bumpMap: woodTex,
+    bumpScale: 0.6,
+    roughness: 0.62,
+  });
+  function board() {
     const m = new THREE.Mesh(
-      new THREE.PlaneGeometry(size, size),
-      new THREE.MeshBasicMaterial({
-        map: shadowTex,
-        transparent: true,
-        depthWrite: false,
-        toneMapped: false,
-      }),
+      new THREE.CylinderGeometry(1.42, 1.38, 0.1, 72),
+      woodMat,
     );
-    m.rotation.x = -Math.PI / 2;
+    m.position.y = -0.052;
+    m.receiveShadow = true;
+    m.castShadow = true;
     return m;
   }
 
@@ -408,9 +446,39 @@ export function createStage(
     cupMat,
   );
   jarBody.add(dome);
-  const jarShadow = contactShadow(4.4);
-  jarShadow.position.y = -0.02;
-  jarBody.add(jarShadow);
+  jarBody.add(board());
+
+  // gotinhas de condensação por fora do copo: sinal de salada fresca e gelada
+  {
+    const n = 80;
+    const drops = new THREE.InstancedMesh(
+      new THREE.SphereGeometry(0.02, 10, 8),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        roughness: 0,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+        envMapIntensity: 5,
+        clearcoat: 1,
+      }),
+      n,
+    );
+    const drop = new THREE.Object3D();
+    for (let i = 0; i < n; i++) {
+      const y = 0.15 + rand() * (H - 0.45);
+      const a = rand() * Math.PI * 2;
+      const r = rad(y) + 0.004;
+      drop.position.set(Math.sin(a) * r, y, Math.cos(a) * r);
+      drop.rotation.set(0, a, 0);
+      const k = 0.5 + rand() * 1.1;
+      drop.scale.set(k, k * (1 + rand() * 0.8), k * 0.45);
+      drop.updateMatrix();
+      drops.setMatrixAt(i, drop.matrix);
+    }
+    drops.renderOrder = 3;
+    jarBody.add(drops);
+  }
 
   const dummy = new THREE.Object3D();
   const tmpQ = new THREE.Quaternion();
@@ -488,6 +556,7 @@ export function createStage(
       pieces.forEach((_, i) => {
         col.set(colors[Math.floor(rand() * colors.length)]);
         col.offsetHSL(0, 0, (rand() - 0.5) * 0.06);
+        col.multiplyScalar(0.5 + 0.5 * Math.pow(pieces[i].rf, 1.6));
         m.setColorAt(i, col);
       });
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
@@ -765,8 +834,10 @@ export function createStage(
       lettuceGeometry(),
       new THREE.MeshStandardMaterial({
         vertexColors: true,
-        roughness: 0.55,
+        roughness: 0.5,
         side: THREE.DoubleSide,
+        emissive: 0x2c5a12,
+        emissiveIntensity: 0.22,
       }),
       ps,
       null,
@@ -865,7 +936,7 @@ export function createStage(
     new THREE.MeshStandardMaterial({
       map: farofaSide,
       bumpMap: farofaSide,
-      bumpScale: 2,
+      bumpScale: 3.5,
       roughness: 1,
       envMapIntensity: 0.5,
     }),
@@ -913,7 +984,7 @@ export function createStage(
     new THREE.MeshStandardMaterial({
       map: farofaTop,
       bumpMap: farofaTop,
-      bumpScale: 3,
+      bumpScale: 5,
       roughness: 1,
       envMapIntensity: 0.5,
     }),
@@ -924,7 +995,7 @@ export function createStage(
   // grumos soltos por cima
   {
     const g = new THREE.IcosahedronGeometry(0.03, 0);
-    const n = 150;
+    const n = 300;
     const crumbs = new THREE.InstancedMesh(
       g,
       new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }),
@@ -940,7 +1011,7 @@ export function createStage(
         Math.sin(a) * rr,
       );
       dummy.rotation.set(rand() * 6, rand() * 6, rand() * 6);
-      const s = 0.5 + rand() * 1.1;
+      const s = 0.5 + rand() * 1.6;
       dummy.scale.set(s, s * 0.8, s);
       dummy.updateMatrix();
       crumbs.setMatrixAt(i, dummy.matrix);
@@ -1018,9 +1089,7 @@ export function createStage(
   lidRing.position.y = 0.05;
   lid.add(lidRing);
   potBody.add(lid);
-  const potShadow = contactShadow(4.2);
-  potShadow.position.y = -0.02;
-  potBody.add(potShadow);
+  potBody.add(board());
   pot.visible = false;
   scene.add(pot);
 
@@ -1365,6 +1434,7 @@ export function createStage(
       [
         bgTex,
         shadowTex,
+        woodTex,
         farofaTex,
         farofaSide,
         farofaTop,
