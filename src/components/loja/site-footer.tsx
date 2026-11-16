@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookiePreferencesLink } from "@/components/loja/cookie-consent";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteFooter() {
@@ -31,6 +32,7 @@ export function SiteFooter() {
           <Link href="/admin" className="text-ink-600 hover:text-forest-900">
             Painel da equipe
           </Link>
+          <CookiePreferencesLink />
         </nav>
         <p className="text-ink-600 text-xs">
           Protótipo de demonstração. Informações de alergênicos seguem a ficha

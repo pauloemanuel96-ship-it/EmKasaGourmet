@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { CONSENT_EVENT, readConsent } from "@/modules/consent/cookies";
 import { captureLead, type LeadState } from "@/modules/leads/actions";
 import { rememberOrigin } from "@/modules/leads/origin";
 import {
@@ -53,14 +54,25 @@ export function LeadPopup() {
       setOrigin(JSON.stringify(o));
       setMode(leadPopupMode(new Date()));
     };
-    const timer = window.setTimeout(show, 9000);
+    // Só depois da escolha de cookies (D-045): os dois avisos nunca aparecem
+    // juntos. Quem acabou de escolher ganha alguns segundos de respiro.
+    let decided = readConsent() !== null;
+    let timer = decided ? window.setTimeout(show, 9000) : 0;
+    const onConsent = () => {
+      if (decided) return;
+      decided = true;
+      timer = window.setTimeout(show, 6000);
+    };
     const onScroll = () => {
+      if (!decided) return;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       if (max > 0 && window.scrollY / max > 0.35) show();
     };
+    window.addEventListener(CONSENT_EVENT, onConsent);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.clearTimeout(timer);
+      window.removeEventListener(CONSENT_EVENT, onConsent);
       window.removeEventListener("scroll", onScroll);
     };
   }, [quiet]);

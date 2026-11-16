@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BottomNav } from "@/components/loja/bottom-nav";
+import { CookieConsent } from "@/components/loja/cookie-consent";
 import { LeadPopup } from "@/components/loja/lead-popup";
 import { DemoBanner } from "@/components/loja/demo-banner";
 import { SiteFooter } from "@/components/loja/site-footer";
@@ -25,6 +26,7 @@ export default function LojaLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={null}>
         <BottomNav />
       </Suspense>
+      <CookieConsent />
       <Suspense fallback={null}>
         <LeadPopup />
       </Suspense>

@@ -308,6 +308,18 @@
   animation: lead-glow 3.2s ease-in-out infinite;
 }
 
+/* Aviso de cookies (D-045): sobe de baixo com leve giro 3D. */
+@keyframes cookie-in {
+  from {
+    opacity: 0;
+    transform: translateY(32px) rotateX(18deg);
+  }
+}
+.cookie-card {
+  transform-origin: 50% 100%;
+  animation: cookie-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
 /* Brilho dourado em volta do logo (o mesmo do cartão de compartilhamento). */
 .logo-glow {
   box-shadow: 0 0 7px 0 rgb(254 210 22 / 0.5);

@@ -6,6 +6,7 @@ import { BOX_PLANS, DELIVERY_ZONES, productBySlug } from "@/demo/data";
 import { planForPeople, suggestBox } from "@/demo/logic";
 import { demo, useDemo } from "@/demo/store";
 import { formatCents } from "@/lib/money";
+import type { BoxHousehold } from "@/modules/familia/queries";
 import { HouseholdEditor } from "./household-editor";
 
 const GROUP_LABEL: Record<string, string> = {
@@ -16,11 +17,16 @@ const GROUP_LABEL: Record<string, string> = {
   ervas: "Ervas",
 };
 
-export function BoxBuilder() {
-  const members = useDemo((s) => s.members);
+/**
+ * Monta o BOX. Com login, usa a família cadastrada na Minha Casa (D-046);
+ * sem login, o editor de demonstração guardado no navegador.
+ */
+export function BoxBuilder({ account }: { account: BoxHousehold | null }) {
+  const demoMembers = useDemo((s) => s.members);
+  const members = account ? account.members : demoMembers;
   const stock = useDemo((s) => s.stock);
   const subscription = useDemo((s) => s.subscription);
-  const [editing, setEditing] = useState(members.length === 0);
+  const [editing, setEditing] = useState(!account && demoMembers.length === 0);
   const [planCode, setPlanCode] = useState<string | null>(null);
   const [frequency, setFrequency] = useState<"semanal" | "quinzenal">(
     "semanal",
@@ -48,16 +54,61 @@ export function BoxBuilder() {
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-2xl">Sua casa: {members.length} pessoa(s)</h2>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="text-forest-900 min-h-11 text-sm font-medium underline"
-          >
-            Editar perfis
-          </button>
-        </div>
+        {account && members.length === 0 ? (
+          <div className="bg-sand-200/60 flex flex-col gap-2 rounded-(--radius-media) p-5">
+            <h2 className="text-2xl">1. Quem mora na sua casa?</h2>
+            <p className="text-ink-600 text-sm">
+              Cadastre as pessoas da casa na Minha Casa e o BOX passa a tirar o
+              que alguém não pode ou não gosta de comer. Enquanto isso, a
+              sugestão abaixo é para uma pessoa, sem restrições.
+            </p>
+            <Link
+              href="/minha-casa"
+              className="bg-forest-900 text-cream-50 inline-flex min-h-11 items-center self-start rounded-full px-5 text-sm font-medium"
+            >
+              Cadastrar minha família
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl">Sua casa: {members.length} pessoa(s)</h2>
+            {account ? (
+              <Link
+                href="/minha-casa"
+                className="text-forest-900 inline-flex min-h-11 items-center text-sm font-medium underline"
+              >
+                Editar na Minha Casa
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="text-forest-900 min-h-11 text-sm font-medium underline"
+              >
+                Editar perfis
+              </button>
+            )}
+          </div>
+        )}
+        {account && members.length > 0 && (
+          <>
+            <ul aria-label="Pessoas da casa" className="flex flex-wrap gap-2">
+              {members.map((m) => (
+                <li
+                  key={m.id}
+                  className="bg-sand-200/70 text-forest-900 rounded-full px-3 py-1 text-sm"
+                >
+                  {m.nickname}
+                </li>
+              ))}
+            </ul>
+            <p className="text-ink-600 text-sm">
+              {account.healthConsent
+                ? "O BOX confere alergias, dieta e o que cada um não gosta, pela ficha de cada item."
+                : "Sem a autorização de saúde na Minha Casa, o BOX confere só o que cada um não gosta; alergias e dieta ficam de fora."}
+            </p>
+          </>
+        )}
         <div
           className="flex flex-wrap gap-2"
           role="radiogroup"

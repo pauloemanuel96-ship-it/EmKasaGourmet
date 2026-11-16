@@ -1,5 +1,8 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { PRODUCTS } from "@/demo/data";
+import type { Member } from "@/demo/logic";
+import { toBoxMembers } from "./box-profile";
 import type { Diet } from "./schemas";
 
 export type HouseholdMember = {
@@ -98,4 +101,26 @@ export async function getHouseholdFit(): Promise<HouseholdFit | null> {
     });
   }
   return { members: members.data, issues };
+}
+
+export type BoxHousehold = {
+  /** Pessoas no formato do BOX, com as regras de box-profile.ts. */
+  members: Member[];
+  healthConsent: boolean;
+};
+
+/**
+ * Família da conta para montar o BOX (D-046). Devolve null sem login: aí o
+ * BOX continua com o editor de demonstração do navegador.
+ */
+export async function getBoxHousehold(): Promise<BoxHousehold | null> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims?.sub) return null;
+  const household = await getHousehold();
+  const boxProducts = PRODUCTS.filter((p) => p.unit === "horta");
+  return {
+    members: toBoxMembers(household.members, boxProducts),
+    healthConsent: household.healthConsent,
+  };
 }

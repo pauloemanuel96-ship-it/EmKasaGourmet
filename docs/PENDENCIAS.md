@@ -71,12 +71,12 @@ Cada item é um módulo. O de cima destrava os de baixo.
 2. 🔴 **Carrinho e pedido de verdade no banco.** Hoje carrinho, checkout e pedidos são demonstração guardada no navegador. Com isso vêm carrinho abandonado e item que entrou e saiu do carrinho.
 3. 🔴 **Pagamento real** (conta Mercado Pago da empresa; hoje é teste).
 4. 🟠 **Cupons e descontos.** O aviso de ofertas promete desconto, mas ainda não existe cupom no sistema. Definir os descontos da Black Friday (percentual, produtos, validade).
-5. 🟠 **Aviso de cookies com consentimento.** Obrigatório antes de registrar visitas e de ligar Google Ads e Meta Ads.
+5. ✅ **Aviso de cookies com consentimento (construído em 16/11, D-045):** necessários, medição e anúncios, com reabertura pelo rodapé. Falta: página de política de privacidade e cookies com texto validado (ver Legal).
 6. 🟠 **Registro de visitas e funil** (quem acessou, quando, de onde veio, o que viu, onde desistiu) e **painel master** só para o owner.
 7. 🟠 **Painéis por papel:** owner com tudo (tráfego, funil, origem, contatos, auditoria); admin com financeiro, pedidos e ajustes. Os papéis já existem no banco; falta separar as telas.
 8. 🟠 **Integração Google Ads e Meta Ads** (conversões pelo servidor). Precisa das contas de anúncio.
 9. ✅ **SEO (base feita em 16/11, D-039):** metadados, dados estruturados de empresa e produto, sitemap e robots. Falta: cadastrar o site no Google Search Console e enviar o sitemap (precisa da sua conta Google), imagem de compartilhamento própria (hoje usa o logo) e textos de descrição dos produtos reais.
-10. ✅ **Família na Minha Casa (construída em 16/11, D-043):** cada pessoa com quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer e objetivo, com autorização de saúde. Falta: foto de perfil ou da família; usar esses perfis no BOX (a loja e a página do produto já conferem, D-044; o BOX ainda usa os perfis de demonstração guardados no navegador); peso, que ficou de fora até haver um uso definido.
+10. ✅ **Família na Minha Casa (construída em 16/11, D-043):** cada pessoa com quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer e objetivo, com autorização de saúde. O BOX já usa esses perfis para quem está logado (D-046). Falta: foto de perfil ou da família; peso, que ficou de fora até haver um uso definido.
 11. 🟠 **Assistente do cliente** (botão flutuante) com IA: ajuda na compra e pode propor o cadastro de um familiar, que a pessoa confirma. Precisa da chave da API e de limite de custo por mês.
 12. ⚪ **Plantas, mudas e flores sob encomenda.** Entra como uma seção da loja com pedido por orçamento, igual a Encomendas. Definir nome (evitar "Mundo Verde", que é marca de uma rede de lojas), produtos, fotos e preços.
 13. ⚪ Envio das ofertas aos contatos (e-mail e WhatsApp): escolher a ferramenta de disparo. Hoje o cadastro só guarda o contato.

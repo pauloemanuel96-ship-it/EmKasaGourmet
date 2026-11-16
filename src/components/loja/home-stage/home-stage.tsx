@@ -303,3 +303,44 @@ export function FarofaStage({ photo }: { photo: StagePhoto }) {
     </section>
   );
 }
+
+/**
+ * Caixa do BOX enchendo de frutas e verduras, no topo da página do BOX
+ * (D-046). Enche sozinha ao abrir e gira um pouco conforme a pessoa rola.
+ */
+export function BoxStage({
+  photo,
+  children,
+}: {
+  photo: StagePhoto;
+  children: React.ReactNode;
+}) {
+  const { boxRef, canvasRef, live } = useStage("box");
+  return (
+    <section
+      aria-labelledby="box-titulo"
+      className="overflow-hidden rounded-(--radius-media) text-[#faf6ee]"
+      style={{ background: DARK }}
+    >
+      <div className="grid items-center gap-2 px-6 pt-8 sm:px-10 md:grid-cols-[1fr_1.05fr] md:gap-6 md:py-6">
+        <div className="relative z-10 flex flex-col gap-4">
+          {children}
+          {live && (
+            <p className="text-xs text-[#faf6ee]/60">
+              Arraste para girar a caixa. Ilustração 3D: o conteúdo de cada
+              semana aparece logo abaixo.
+            </p>
+          )}
+        </div>
+        <StageCanvas
+          boxRef={boxRef}
+          canvasRef={canvasRef}
+          live={live}
+          photo={photo}
+          priority
+          className="h-[40svh] min-h-[280px] md:h-[min(62svh,500px)]"
+        />
+      </div>
+    </section>
+  );
+}
