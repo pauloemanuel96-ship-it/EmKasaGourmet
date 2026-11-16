@@ -1,0 +1,2093 @@
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index a8fe371..7bd3f48 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -156,3 +156,10 @@ Na D-038 as cenas passaram a andar sozinhas ao entrar na tela, e o Paulo sentiu
+ 
+ ## D-041 — Abertura com vídeo real da horta ao prato · **Aceita (pedido do Paulo, 16/11/2026)**
+ A caixa do BOX em 3D saiu da abertura: o Paulo quer a página com mais cara de coisa natural e enviou um vídeo (horta, colheita, lavagem, preparo e prato). A abertura passa a ser esse vídeo atrás do texto, sem som e em laço. Do vídeo de 69 s foi montado um laço de 15 s com as cinco cenas e transição suave, em três tamanhos: celular (recorte vertical, 1,5 MB), 720p (2,9 MB) e 1080p (5,2 MB, só em telas largas). Regras: a primeira imagem aparece na hora e o vídeo entra quando carrega; fora da tela ele pausa; há botão de pausar; com "reduzir movimento" ou economia de dados fica só a imagem. GIF não é usado: pesa dezenas de vezes mais e tem qualidade pior. O 3D continua na salada e na Farofa (D-040); o código da caixa do BOX ficou guardado na cena para a página do BOX. Arquivos em `public/video/` e `src/components/loja/hero-video.tsx`.
++
++## D-042 — Conta do cliente e endereços da família · **Aceita (pedido do Paulo, 16/11/2026)**
++A loja passa a ter conta de cliente: criar conta com e-mail e senha, entrar, pedir senha nova, alterar nome, celular e a opção de receber ofertas, e cadastrar endereços. A conta guarda até 10 endereços, cada um com um nome dado pela pessoa (casa, trabalho, casa da mãe, do pai, do filho) e quem recebe; um deles é o principal. O CEP preenche rua, bairro, cidade e estado (ViaCEP, gratuito) e a pessoa ajusta à mão. Tudo fica no topo da Minha Casa; o restante daquela página continua demonstração.
++
++Segurança: cada pessoa lê e altera só a própria conta e os próprios endereços (RLS); owner e admin leem; operação e atendimento não; o e-mail da conta vem do login e a pessoa não consegue trocá-lo pela tabela. Abrir o cadastro não expõe nada novo do catálogo: as regras que liberam leitura a "qualquer logado" já eram públicas. Cliente logado que tentar abrir o painel cai na tela "sem acesso", como qualquer usuário sem papel. As mensagens de cadastro e de senha não revelam se um e-mail já tem conta. Painel: `/admin/clientes`.
++
++Depende de duas configurações no Supabase que só o Paulo faz: abrir o cadastro com confirmação de e-mail e cadastrar um remetente próprio. Sem a primeira, a tela mostra "O cadastro ainda não está aberto".
+diff --git a/docs/PENDENCIAS.md b/docs/PENDENCIAS.md
+index 08117cd..9ad324c 100644
+--- a/docs/PENDENCIAS.md
++++ b/docs/PENDENCIAS.md
+@@ -67,7 +67,7 @@
+ 
+ ## Frentes pedidas em 16/11/2026 (ordem sugerida de construção)
+ Cada item é um módulo. O de cima destrava os de baixo.
+-1. 🔴 **Conta do cliente** (login por e-mail, dados e endereço). Base de tudo: sem conta não há carrinho salvo, histórico nem desconto por pessoa.
++1. ✅ **Conta do cliente (construída em 16/11, D-042):** criar conta, entrar, senha nova, dados e endereços da família. Para funcionar em produção falta o Paulo abrir o cadastro e configurar o remetente de e-mail no Supabase (ver seção abaixo). Ainda não entrou: "usar minha localização", apagar a própria conta pelo site e a confirmação do endereço na compra (vem com o carrinho de verdade).
+ 2. 🔴 **Carrinho e pedido de verdade no banco.** Hoje carrinho, checkout e pedidos são demonstração guardada no navegador. Com isso vêm carrinho abandonado e item que entrou e saiu do carrinho.
+ 3. 🔴 **Pagamento real** (conta Mercado Pago da empresa; hoje é teste).
+ 4. 🟠 **Cupons e descontos.** O aviso de ofertas promete desconto, mas ainda não existe cupom no sistema. Definir os descontos da Black Friday (percentual, produtos, validade).
+diff --git a/src/app/(loja)/entrar/page.tsx b/src/app/(loja)/entrar/page.tsx
+new file mode 100644
+index 0000000..3498075
+--- /dev/null
++++ b/src/app/(loja)/entrar/page.tsx
+@@ -0,0 +1,56 @@
++import type { Metadata } from "next";
++import { redirect } from "next/navigation";
++import { Suspense } from "react";
++import { AuthForms } from "@/components/loja/conta/auth-forms";
++import { getCustomerAccount } from "@/modules/conta/queries";
++
++export const metadata: Metadata = {
++  title: "Entrar",
++  robots: { index: false },
++};
++
++/** Quem já está logado não precisa ver esta tela. */
++async function Forms({
++  searchParams,
++}: {
++  searchParams: Promise<{ criar?: string; erro?: string }>;
++}) {
++  const [account, params] = await Promise.all([
++    getCustomerAccount(),
++    searchParams,
++  ]);
++  if (account) redirect("/minha-casa");
++  return (
++    <>
++      {params.erro === "link" && (
++        <p role="alert" className="text-terracotta-500 mb-4 text-sm">
++          Esse link expirou ou já foi usado. Entre com a sua senha ou peça um
++          link novo em “Esqueci a senha”.
++        </p>
++      )}
++      <AuthForms initial={params.criar ? "criar" : "entrar"} />
++    </>
++  );
++}
++
++export default function EntrarPage({
++  searchParams,
++}: {
++  searchParams: Promise<{ criar?: string; erro?: string }>;
++}) {
++  return (
++    <main className="mx-auto max-w-md px-4 pt-10 sm:px-6">
++      <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
++        Minha Casa Emkasa
++      </p>
++      <h1 className="mb-6 text-4xl">Sua conta</h1>
++      <Suspense
++        fallback={
++          <div className="bg-sand-200/60 h-80 rounded-(--radius-media)" />
++        }
++      >
++        <Forms searchParams={searchParams} />
++      </Suspense>
++    </main>
++  );
++}
+diff --git a/src/app/(loja)/minha-casa/page.tsx b/src/app/(loja)/minha-casa/page.tsx
+index b183211..e3b3010 100644
+--- a/src/app/(loja)/minha-casa/page.tsx
++++ b/src/app/(loja)/minha-casa/page.tsx
+@@ -1,4 +1,6 @@
+ import type { Metadata } from "next";
++import { Suspense } from "react";
++import { AccountPanel } from "@/components/loja/conta/account-panel";
+ import { MyHome } from "@/components/loja/my-home";
+ 
+ export const metadata: Metadata = {
+@@ -13,6 +15,13 @@ export default function MinhaCasaPage() {
+         Minha Casa Emkasa
+       </p>
+       <h1 className="mb-8 text-4xl">Sua casa, sua assinatura, seus pedidos</h1>
++      <Suspense
++        fallback={
++          <div className="bg-sand-200/60 mb-10 h-48 rounded-(--radius-media)" />
++        }
++      >
++        <AccountPanel />
++      </Suspense>
+       <MyHome />
+     </main>
+   );
+diff --git a/src/app/(loja)/minha-casa/senha/page.tsx b/src/app/(loja)/minha-casa/senha/page.tsx
+new file mode 100644
+index 0000000..63ef7d4
+--- /dev/null
++++ b/src/app/(loja)/minha-casa/senha/page.tsx
+@@ -0,0 +1,21 @@
++import type { Metadata } from "next";
++import { PasswordForm } from "@/components/loja/conta/password-form";
++
++export const metadata: Metadata = {
++  title: "Senha nova",
++  robots: { index: false },
++};
++
++export default function SenhaPage() {
++  return (
++    <main className="mx-auto max-w-md px-4 pt-10 sm:px-6">
++      <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
++        Minha Casa Emkasa
++      </p>
++      <h1 className="mb-6 text-4xl">Senha nova</h1>
++      <div className="border-sand-200 bg-paper rounded-(--radius-media) border p-6 sm:p-8">
++        <PasswordForm />
++      </div>
++    </main>
++  );
++}
+diff --git a/src/app/admin/(painel)/clientes/page.tsx b/src/app/admin/(painel)/clientes/page.tsx
+new file mode 100644
+index 0000000..3129ae5
+--- /dev/null
++++ b/src/app/admin/(painel)/clientes/page.tsx
+@@ -0,0 +1,81 @@
++import type { Metadata } from "next";
++import { AdminPage } from "@/components/admin/page-shell";
++import { listCustomers } from "@/modules/conta/queries";
++
++export const metadata: Metadata = { title: "Clientes" };
++
++const when = new Intl.DateTimeFormat("pt-BR", {
++  dateStyle: "short",
++  timeZone: "America/Sao_Paulo",
++});
++
++export default function CustomersPage() {
++  return (
++    <AdminPage roles={["owner", "admin"]}>
++      <CustomerList />
++    </AdminPage>
++  );
++}
++
++async function CustomerList() {
++  const customers = await listCustomers();
++  const optedIn = customers.filter((c) => c.marketing_consent).length;
++
++  return (
++    <section className="flex flex-col gap-6">
++      <header>
++        <h1 className="text-3xl">Clientes</h1>
++        <p className="text-ink-600">
++          Quem criou conta na loja. Cada pessoa cuida dos próprios dados e
++          endereços na Minha Casa.
++        </p>
++      </header>
++
++      <dl className="grid gap-3 sm:grid-cols-2">
++        {[
++          ["Contas criadas", customers.length],
++          ["Aceitam receber ofertas", optedIn],
++        ].map(([label, value]) => (
++          <div
++            key={label}
++            className="border-sand-200 bg-paper rounded-(--radius-media) border p-4"
++          >
++            <dt className="text-ink-600 text-sm">{label}</dt>
++            <dd className="text-forest-900 mt-1 font-serif text-2xl">
++              {value}
++            </dd>
++          </div>
++        ))}
++      </dl>
++
++      {customers.length === 0 ? (
++        <p className="text-ink-600">
++          Ninguém criou conta ainda. O cadastro fica em “Minha Casa”, na loja.
++        </p>
++      ) : (
++        <ul className="border-sand-200 bg-paper divide-sand-200 divide-y rounded-(--radius-media) border">
++          {customers.map((c) => {
++            const main =
++              c.addresses.find((a) => a.is_default) ?? c.addresses[0];
++            return (
++              <li key={c.id} className="flex flex-col gap-1 px-4 py-3">
++                <p className="text-forest-900 font-medium">{c.name}</p>
++                <p className="text-ink-600 text-sm break-all">
++                  {c.email}
++                  {c.phone ? ` · ${c.phone}` : ""}
++                </p>
++                <p className="text-ink-600 text-xs">
++                  Desde {when.format(new Date(c.created_at))} ·{" "}
++                  {c.addresses.length === 0
++                    ? "sem endereço"
++                    : `${c.addresses.length} endereço${c.addresses.length > 1 ? "s" : ""}${main ? ` (${main.city}/${main.state})` : ""}`}
++                  {c.marketing_consent ? " · aceita ofertas" : ""}
++                </p>
++              </li>
++            );
++          })}
++        </ul>
++      )}
++    </section>
++  );
++}
+diff --git a/src/app/auth/callback/route.ts b/src/app/auth/callback/route.ts
+index 414ac1b..1b223a5 100644
+--- a/src/app/auth/callback/route.ts
++++ b/src/app/auth/callback/route.ts
+@@ -1,18 +1,32 @@
+ import { NextResponse, type NextRequest } from "next/server";
+ import { createClient } from "@/lib/supabase/server";
++import { safeNext } from "@/modules/conta/schemas";
+ 
+-/** Destino do link mágico: troca o código pela sessão e entra no painel. */
++/**
++ * Destino dos links enviados por e-mail: troca o código pela sessão.
++ * Equipe (link mágico) vai para o painel; cliente (confirmação de conta ou
++ * senha nova) vem com ?next= e vai para a área dele.
++ */
+ export async function GET(request: NextRequest) {
+   const code = request.nextUrl.searchParams.get("code");
++  const next = request.nextUrl.searchParams.get("next");
++  const customer = next !== null;
+ 
+   if (code) {
+     const supabase = await createClient();
+     const { error } = await supabase.auth.exchangeCodeForSession(code);
+     if (!error) {
+-      return NextResponse.redirect(new URL("/admin", request.url));
++      return NextResponse.redirect(
++        new URL(customer ? safeNext(next) : "/admin", request.url),
++      );
+     }
+     console.warn("[auth] exchangeCodeForSession:", error.status, error.code);
+   }
+ 
+-  return NextResponse.redirect(new URL("/admin/login?erro=link", request.url));
++  return NextResponse.redirect(
++    new URL(
++      customer ? "/entrar?erro=link" : "/admin/login?erro=link",
++      request.url,
++    ),
++  );
+ }
+diff --git a/src/components/admin/admin-nav.tsx b/src/components/admin/admin-nav.tsx
+index 523a60b..21a4079 100644
+--- a/src/components/admin/admin-nav.tsx
++++ b/src/components/admin/admin-nav.tsx
+@@ -12,6 +12,7 @@ const ITEMS = [
+   { href: "/admin/categorias", label: "Categorias" },
+   { href: "/admin/ingredientes", label: "Ingredientes" },
+   { href: "/admin/campanhas", label: "Campanhas" },
++  { href: "/admin/clientes", label: "Clientes" },
+   { href: "/admin/leads", label: "Contatos" },
+   { href: "/admin/configuracoes", label: "Configurações" },
+   { href: "/admin/assistente", label: "Assistente" },
+diff --git a/src/components/loja/conta/account-panel.tsx b/src/components/loja/conta/account-panel.tsx
+new file mode 100644
+index 0000000..0d1c186
+--- /dev/null
++++ b/src/components/loja/conta/account-panel.tsx
+@@ -0,0 +1,89 @@
++import Link from "next/link";
++import { signOutCustomer } from "@/modules/conta/actions";
++import { getCustomerAccount } from "@/modules/conta/queries";
++import { AddressManager } from "./address-manager";
++import { BTN_GHOST } from "./fields";
++import { ProfileForm } from "./profile-form";
++
++/**
++ * Conta de verdade no topo da Minha Casa (D-042): dados e endereços salvos no
++ * banco. Sem login, vira o convite para entrar ou criar conta.
++ */
++export async function AccountPanel() {
++  const account = await getCustomerAccount();
++
++  if (!account) {
++    return (
++      <section className="bg-forest-900 text-cream-50 mb-10 flex flex-col gap-4 rounded-(--radius-media) p-6 sm:p-8">
++        <h2 className="text-cream-50 text-3xl">Entre na sua conta</h2>
++        <p className="text-cream-50/85 max-w-prose">
++          Guarde seus dados e os endereços da família para comprar mais rápido e
++          receber descontos.
++        </p>
++        <div className="flex flex-wrap gap-3">
++          <Link
++            href="/entrar"
++            className="bg-cream-50 text-forest-900 inline-flex min-h-12 items-center rounded-full px-6 font-medium"
++          >
++            Entrar
++          </Link>
++          <Link
++            href="/entrar?criar=1"
++            className="border-cream-50/60 text-cream-50 inline-flex min-h-12 items-center rounded-full border px-6 font-medium"
++          >
++            Criar conta
++          </Link>
++        </div>
++      </section>
++    );
++  }
++
++  return (
++    <div className="mb-12 flex flex-col gap-10">
++      <section aria-labelledby="conta-dados" className="flex flex-col gap-5">
++        <div className="flex flex-wrap items-end justify-between gap-3">
++          <div>
++            <h2 id="conta-dados" className="text-3xl">
++              Olá, {account.name.split(" ")[0]}
++            </h2>
++            <p className="text-ink-600 text-sm break-all">{account.email}</p>
++          </div>
++          <form action={signOutCustomer}>
++            <button type="submit" className={BTN_GHOST}>
++              Sair
++            </button>
++          </form>
++        </div>
++        <ProfileForm
++          name={account.name}
++          phone={account.phone}
++          marketing={account.marketing_consent}
++        />
++      </section>
++
++      <section
++        aria-labelledby="conta-enderecos"
++        className="flex flex-col gap-4"
++      >
++        <div>
++          <h2 id="conta-enderecos" className="text-3xl">
++            Endereços da família
++          </h2>
++          <p className="text-ink-600">
++            Casa, trabalho, casa dos pais ou dos filhos. Na hora da compra você
++            escolhe para onde vai.
++          </p>
++        </div>
++        <AddressManager addresses={account.addresses} />
++      </section>
++      <p>
++        <Link
++          href="/minha-casa/senha"
++          className="text-ink-600 text-sm underline underline-offset-4"
++        >
++          Trocar a senha
++        </Link>
++      </p>
++    </div>
++  );
++}
+diff --git a/src/components/loja/conta/address-manager.tsx b/src/components/loja/conta/address-manager.tsx
+new file mode 100644
+index 0000000..544a164
+--- /dev/null
++++ b/src/components/loja/conta/address-manager.tsx
+@@ -0,0 +1,326 @@
++"use client";
++
++import { useActionState, useEffect, useRef, useState } from "react";
++import {
++  deleteAddress,
++  makeDefaultAddress,
++  saveAddress,
++} from "@/modules/conta/actions";
++import type { CustomerAddress } from "@/modules/conta/queries";
++import { formatCep, UF, type FormState } from "@/modules/conta/schemas";
++import { BTN_GHOST, BTN_PRIMARY, Field, FormMessage, INPUT } from "./fields";
++
++const IDLE: FormState = { status: "idle" };
++const SUGGESTED = [
++  "Casa",
++  "Trabalho",
++  "Casa da mãe",
++  "Casa do pai",
++  "Casa do filho",
++];
++
++/**
++ * Endereços da conta (D-042): vários por pessoa, cada um com um nome, pensando
++ * na família. O CEP preenche rua, bairro e cidade; a pessoa confere e ajusta.
++ */
++export function AddressManager({
++  addresses,
++}: {
++  addresses: CustomerAddress[];
++}) {
++  const [editing, setEditing] = useState<CustomerAddress | "novo" | null>(null);
++
++  return (
++    <div className="flex flex-col gap-4">
++      {addresses.length === 0 && editing === null && (
++        <p className="text-ink-600">
++          Nenhum endereço cadastrado. Cadastre o de casa, o do trabalho ou o de
++          alguém da família.
++        </p>
++      )}
++      <ul className="grid gap-3 sm:grid-cols-2">
++        {addresses.map((a) => (
++          <li
++            key={a.id}
++            className="border-sand-200 bg-paper flex flex-col gap-2 rounded-(--radius-media) border p-4"
++          >
++            <div className="flex items-center justify-between gap-2">
++              <p className="text-forest-900 font-serif text-xl">{a.label}</p>
++              {a.is_default && (
++                <span className="bg-leaf-700 text-cream-50 rounded-full px-2.5 py-0.5 text-xs font-medium">
++                  Principal
++                </span>
++              )}
++            </div>
++            <p className="text-ink-600 text-sm">
++              {a.recipient ? `${a.recipient} · ` : ""}
++              {a.street}, {a.number}
++              {a.complement ? `, ${a.complement}` : ""}
++              <br />
++              {a.district} · {a.city}/{a.state} · CEP {formatCep(a.cep)}
++              {a.reference ? (
++                <>
++                  <br />
++                  Referência: {a.reference}
++                </>
++              ) : null}
++            </p>
++            <div className="mt-1 flex flex-wrap gap-2">
++              <button
++                type="button"
++                onClick={() => setEditing(a)}
++                className={BTN_GHOST}
++              >
++                Alterar
++              </button>
++              {!a.is_default && (
++                <form action={makeDefaultAddress}>
++                  <input type="hidden" name="id" value={a.id} />
++                  <button type="submit" className={BTN_GHOST}>
++                    Tornar principal
++                  </button>
++                </form>
++              )}
++              <details className="text-sm">
++                <summary className="text-ink-600 flex min-h-11 cursor-pointer items-center px-2 underline">
++                  Apagar
++                </summary>
++                <form action={deleteAddress}>
++                  <input type="hidden" name="id" value={a.id} />
++                  <button
++                    type="submit"
++                    className="bg-terracotta-500 min-h-10 rounded-full px-4 font-medium text-white"
++                  >
++                    Apagar este endereço
++                  </button>
++                </form>
++              </details>
++            </div>
++          </li>
++        ))}
++      </ul>
++
++      {editing === null ? (
++        addresses.length < 10 && (
++          <div>
++            <button
++              type="button"
++              onClick={() => setEditing("novo")}
++              className={BTN_PRIMARY}
++            >
++              Cadastrar endereço
++            </button>
++          </div>
++        )
++      ) : (
++        <AddressForm
++          key={editing === "novo" ? "novo" : editing.id}
++          address={editing === "novo" ? null : editing}
++          first={addresses.length === 0}
++          onDone={() => setEditing(null)}
++        />
++      )}
++    </div>
++  );
++}
++
++function AddressForm({
++  address,
++  first,
++  onDone,
++}: {
++  address: CustomerAddress | null;
++  first: boolean;
++  onDone: () => void;
++}) {
++  const [state, action, pending] = useActionState(saveAddress, IDLE);
++  const [cepNote, setCepNote] = useState("");
++  const formRef = useRef<HTMLFormElement>(null);
++
++  useEffect(() => {
++    if (state.status === "ok") onDone();
++  }, [state.status, onDone]);
++
++  // CEP -> rua, bairro, cidade e estado (ViaCEP). Se falhar, a pessoa digita.
++  async function lookup(raw: string) {
++    const cep = raw.replace(/\D/g, "");
++    if (cep.length !== 8) return;
++    setCepNote("Buscando o CEP…");
++    try {
++      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
++      const data = (await res.json()) as {
++        erro?: boolean | string;
++        logradouro?: string;
++        bairro?: string;
++        localidade?: string;
++        uf?: string;
++      };
++      if (!res.ok || data.erro) {
++        setCepNote("CEP não encontrado. Preencha o endereço à mão.");
++        return;
++      }
++      const form = formRef.current;
++      if (!form) return;
++      const set = (name: string, value?: string) => {
++        const el = form.elements.namedItem(name) as HTMLInputElement | null;
++        if (el && value) el.value = value;
++      };
++      set("street", data.logradouro);
++      set("district", data.bairro);
++      set("city", data.localidade);
++      set("state", data.uf);
++      setCepNote("Endereço preenchido pelo CEP. Confira e ajuste se precisar.");
++      (form.elements.namedItem("number") as HTMLInputElement | null)?.focus();
++    } catch {
++      setCepNote("Não deu para buscar o CEP. Preencha o endereço à mão.");
++    }
++  }
++
++  return (
++    <form
++      ref={formRef}
++      action={action}
++      className="border-sand-200 bg-paper grid gap-4 rounded-(--radius-media) border p-5 sm:grid-cols-6"
++    >
++      <h3 className="text-2xl sm:col-span-6">
++        {address ? `Alterar “${address.label}”` : "Novo endereço"}
++      </h3>
++      {address && <input type="hidden" name="id" value={address.id} />}
++      <div className="sm:col-span-3">
++        <Field
++          label="Nome deste endereço"
++          name="label"
++          defaultValue={address?.label ?? ""}
++          list="nomes-de-endereco"
++          placeholder="Casa, Trabalho, Casa da mãe…"
++          required
++          state={state}
++        />
++        <datalist id="nomes-de-endereco">
++          {SUGGESTED.map((s) => (
++            <option key={s} value={s} />
++          ))}
++        </datalist>
++      </div>
++      <Field
++        className="sm:col-span-3"
++        label="Quem recebe (opcional)"
++        name="recipient"
++        defaultValue={address?.recipient ?? ""}
++        state={state}
++      />
++      <div className="sm:col-span-2">
++        <Field
++          label="CEP"
++          name="cep"
++          inputMode="numeric"
++          autoComplete="postal-code"
++          defaultValue={address ? formatCep(address.cep) : ""}
++          onBlur={(e) => lookup(e.target.value)}
++          required
++          state={state}
++        />
++        {cepNote && (
++          <p role="status" className="text-ink-600 mt-1 text-xs">
++            {cepNote}
++          </p>
++        )}
++      </div>
++      <Field
++        className="sm:col-span-4"
++        label="Rua"
++        name="street"
++        defaultValue={address?.street ?? ""}
++        autoComplete="address-line1"
++        required
++        state={state}
++      />
++      <Field
++        className="sm:col-span-2"
++        label="Número"
++        name="number"
++        defaultValue={address?.number ?? ""}
++        required
++        state={state}
++      />
++      <Field
++        className="sm:col-span-4"
++        label="Complemento (opcional)"
++        name="complement"
++        defaultValue={address?.complement ?? ""}
++        state={state}
++      />
++      <Field
++        className="sm:col-span-2"
++        label="Bairro"
++        name="district"
++        defaultValue={address?.district ?? ""}
++        required
++        state={state}
++      />
++      <Field
++        className="sm:col-span-3"
++        label="Cidade"
++        name="city"
++        defaultValue={address?.city ?? ""}
++        autoComplete="address-level2"
++        required
++        state={state}
++      />
++      <div className="sm:col-span-1">
++        <label
++          htmlFor="campo-state"
++          className="text-ink-900 mb-1 block text-sm font-medium"
++        >
++          Estado
++        </label>
++        <select
++          id="campo-state"
++          name="state"
++          defaultValue={
++            (state.status === "error" ? state.values?.state : undefined) ??
++            address?.state ??
++            ""
++          }
++          required
++          className={INPUT}
++        >
++          <option value="" disabled>
++            UF
++          </option>
++          {UF.map((uf) => (
++            <option key={uf} value={uf}>
++              {uf}
++            </option>
++          ))}
++        </select>
++      </div>
++      <Field
++        className="sm:col-span-6"
++        label="Ponto de referência (opcional)"
++        name="reference"
++        defaultValue={address?.reference ?? ""}
++        state={state}
++      />
++      {!first && !address?.is_default && (
++        <label className="text-ink-600 flex items-center gap-3 text-sm sm:col-span-6">
++          <input
++            type="checkbox"
++            name="isDefault"
++            className="accent-forest-900 size-5"
++          />
++          Usar como endereço principal
++        </label>
++      )}
++      <div className="flex flex-wrap items-center gap-3 sm:col-span-6">
++        <button type="submit" disabled={pending} className={BTN_PRIMARY}>
++          {pending ? "Salvando…" : "Salvar endereço"}
++        </button>
++        <button type="button" onClick={onDone} className={BTN_GHOST}>
++          Cancelar
++        </button>
++        <FormMessage state={state} />
++      </div>
++    </form>
++  );
++}
+diff --git a/src/components/loja/conta/auth-forms.tsx b/src/components/loja/conta/auth-forms.tsx
+new file mode 100644
+index 0000000..d2ae682
+--- /dev/null
++++ b/src/components/loja/conta/auth-forms.tsx
+@@ -0,0 +1,165 @@
++"use client";
++
++import { useActionState, useState } from "react";
++import {
++  requestPasswordReset,
++  signInCustomer,
++  signUpCustomer,
++} from "@/modules/conta/actions";
++import type { FormState } from "@/modules/conta/schemas";
++import { BTN_PRIMARY, Field, FormMessage } from "./fields";
++
++const IDLE: FormState = { status: "idle" };
++type Tab = "entrar" | "criar" | "senha";
++
++/** Entrar, criar conta e pedir senha nova, numa tela só (D-042). */
++export function AuthForms({ initial = "entrar" }: { initial?: Tab }) {
++  const [tab, setTab] = useState<Tab>(initial);
++  const [inState, signIn, inPending] = useActionState(signInCustomer, IDLE);
++  const [upState, signUp, upPending] = useActionState(signUpCustomer, IDLE);
++  const [pwState, reset, pwPending] = useActionState(
++    requestPasswordReset,
++    IDLE,
++  );
++  const tabBtn = (id: Tab, label: string) => (
++    <button
++      type="button"
++      role="tab"
++      aria-selected={tab === id}
++      onClick={() => setTab(id)}
++      className={`min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors ${tab === id ? "bg-forest-900 text-cream-50" : "text-ink-600"}`}
++    >
++      {label}
++    </button>
++  );
++
++  return (
++    <div className="border-sand-200 bg-paper flex flex-col gap-5 rounded-(--radius-media) border p-6 sm:p-8">
++      {tab !== "senha" && (
++        <div role="tablist" className="bg-sand-200/70 flex rounded-full p-1">
++          {tabBtn("entrar", "Entrar")}
++          {tabBtn("criar", "Criar conta")}
++        </div>
++      )}
++
++      {tab === "entrar" && (
++        <form action={signIn} className="flex flex-col gap-4">
++          <Field
++            label="E-mail"
++            name="email"
++            type="email"
++            autoComplete="email"
++            required
++            state={inState}
++          />
++          <Field
++            label="Senha"
++            name="password"
++            type="password"
++            autoComplete="current-password"
++            required
++            state={inState}
++          />
++          <FormMessage state={inState} />
++          <button type="submit" disabled={inPending} className={BTN_PRIMARY}>
++            {inPending ? "Entrando…" : "Entrar"}
++          </button>
++          <button
++            type="button"
++            onClick={() => setTab("senha")}
++            className="text-ink-600 text-sm underline underline-offset-4"
++          >
++            Esqueci a senha
++          </button>
++        </form>
++      )}
++
++      {tab === "criar" &&
++        (upState.status === "ok" ? (
++          <p role="status" className="text-forest-900 text-lg">
++            {upState.message}
++          </p>
++        ) : (
++          <form action={signUp} className="flex flex-col gap-4">
++            <Field
++              label="Seu nome"
++              name="name"
++              autoComplete="name"
++              required
++              state={upState}
++            />
++            <Field
++              label="E-mail"
++              name="email"
++              type="email"
++              autoComplete="email"
++              required
++              state={upState}
++            />
++            <Field
++              label="WhatsApp com DDD (opcional)"
++              name="phone"
++              type="tel"
++              inputMode="numeric"
++              autoComplete="tel-national"
++              state={upState}
++            />
++            <Field
++              label="Crie uma senha"
++              name="password"
++              type="password"
++              autoComplete="new-password"
++              required
++              minLength={8}
++              hint="Pelo menos 8 caracteres."
++              state={upState}
++            />
++            <label className="text-ink-600 flex items-start gap-3 text-sm">
++              <input
++                type="checkbox"
++                name="marketing"
++                className="accent-forest-900 mt-0.5 size-5 shrink-0"
++              />
++              <span>
++                Quero receber ofertas e novidades da Emkasa por e-mail e
++                WhatsApp. Posso sair quando quiser.
++              </span>
++            </label>
++            <FormMessage state={upState} />
++            <button type="submit" disabled={upPending} className={BTN_PRIMARY}>
++              {upPending ? "Criando…" : "Criar minha conta"}
++            </button>
++          </form>
++        ))}
++
++      {tab === "senha" && (
++        <form action={reset} className="flex flex-col gap-4">
++          <h2 className="text-2xl">Criar uma senha nova</h2>
++          <p className="text-ink-600 text-sm">
++            Informe o e-mail da sua conta. Enviamos um link para você criar
++            outra senha.
++          </p>
++          <Field
++            label="E-mail"
++            name="email"
++            type="email"
++            autoComplete="email"
++            required
++            state={pwState}
++          />
++          <FormMessage state={pwState} />
++          <button type="submit" disabled={pwPending} className={BTN_PRIMARY}>
++            {pwPending ? "Enviando…" : "Enviar link"}
++          </button>
++          <button
++            type="button"
++            onClick={() => setTab("entrar")}
++            className="text-ink-600 text-sm underline underline-offset-4"
++          >
++            Voltar para entrar
++          </button>
++        </form>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/loja/conta/fields.tsx b/src/components/loja/conta/fields.tsx
+new file mode 100644
+index 0000000..64dd079
+--- /dev/null
++++ b/src/components/loja/conta/fields.tsx
+@@ -0,0 +1,77 @@
++import type { FormState } from "@/modules/conta/schemas";
++
++export const INPUT =
++  "border-sand-200 bg-paper text-ink-900 focus:border-forest-700 min-h-12 w-full rounded-(--radius-control) border px-4 focus:outline-none";
++export const BTN_PRIMARY =
++  "bg-forest-900 text-cream-50 hover:bg-forest-700 inline-flex min-h-12 items-center justify-center rounded-full px-6 font-medium disabled:opacity-60";
++export const BTN_GHOST =
++  "border-sand-200 hover:bg-sand-200 inline-flex min-h-11 items-center justify-center rounded-full border px-5 text-sm font-medium";
++
++/** Campo com rótulo visível e erro logo abaixo. */
++export function Field({
++  label,
++  name,
++  state,
++  hint,
++  className = "",
++  ...input
++}: {
++  label: string;
++  name: string;
++  state: FormState;
++  hint?: string;
++} & React.InputHTMLAttributes<HTMLInputElement>) {
++  const error =
++    state.status === "error" ? state.fieldErrors?.[name]?.[0] : undefined;
++  const id = input.id ?? `campo-${name}`;
++  // Depois de um erro, o campo volta com o que a pessoa tinha digitado.
++  const kept = state.status === "error" ? state.values?.[name] : undefined;
++  return (
++    <div className={className}>
++      <label
++        htmlFor={id}
++        className="text-ink-900 mb-1 block text-sm font-medium"
++      >
++        {label}
++      </label>
++      <input
++        {...input}
++        defaultValue={kept ?? input.defaultValue}
++        id={id}
++        name={name}
++        aria-invalid={Boolean(error)}
++        aria-describedby={
++          error ? `${id}-erro` : hint ? `${id}-dica` : undefined
++        }
++        className={INPUT}
++      />
++      {error ? (
++        <p id={`${id}-erro`} className="text-terracotta-500 mt-1 text-sm">
++          {error}
++        </p>
++      ) : hint ? (
++        <p id={`${id}-dica`} className="text-ink-600 mt-1 text-xs">
++          {hint}
++        </p>
++      ) : null}
++    </div>
++  );
++}
++
++/** Mensagem geral do formulário (sucesso ou erro sem campo). */
++export function FormMessage({ state }: { state: FormState }) {
++  if (state.status === "idle" || !state.message) return null;
++  if (state.status === "error" && state.fieldErrors) return null;
++  return (
++    <p
++      role={state.status === "error" ? "alert" : "status"}
++      className={
++        state.status === "error"
++          ? "text-terracotta-500 text-sm"
++          : "text-leaf-700 text-sm font-medium"
++      }
++    >
++      {state.message}
++    </p>
++  );
++}
+diff --git a/src/components/loja/conta/password-form.tsx b/src/components/loja/conta/password-form.tsx
+new file mode 100644
+index 0000000..c83d27b
+--- /dev/null
++++ b/src/components/loja/conta/password-form.tsx
+@@ -0,0 +1,43 @@
++"use client";
++
++import Link from "next/link";
++import { useActionState } from "react";
++import { updatePassword } from "@/modules/conta/actions";
++import type { FormState } from "@/modules/conta/schemas";
++import { BTN_PRIMARY, Field, FormMessage } from "./fields";
++
++const IDLE: FormState = { status: "idle" };
++
++export function PasswordForm() {
++  const [state, action, pending] = useActionState(updatePassword, IDLE);
++  if (state.status === "ok") {
++    return (
++      <div className="flex flex-col gap-4">
++        <p role="status" className="text-forest-900 text-lg">
++          Senha trocada.
++        </p>
++        <Link href="/minha-casa" className={BTN_PRIMARY}>
++          Ir para Minha Casa
++        </Link>
++      </div>
++    );
++  }
++  return (
++    <form action={action} className="flex flex-col gap-4">
++      <Field
++        label="Senha nova"
++        name="password"
++        type="password"
++        autoComplete="new-password"
++        required
++        minLength={8}
++        hint="Pelo menos 8 caracteres."
++        state={state}
++      />
++      <FormMessage state={state} />
++      <button type="submit" disabled={pending} className={BTN_PRIMARY}>
++        {pending ? "Salvando…" : "Salvar senha nova"}
++      </button>
++    </form>
++  );
++}
+diff --git a/src/components/loja/conta/profile-form.tsx b/src/components/loja/conta/profile-form.tsx
+new file mode 100644
+index 0000000..5b5aa0e
+--- /dev/null
++++ b/src/components/loja/conta/profile-form.tsx
+@@ -0,0 +1,56 @@
++"use client";
++
++import { useActionState } from "react";
++import { saveProfile } from "@/modules/conta/actions";
++import type { FormState } from "@/modules/conta/schemas";
++import { BTN_PRIMARY, Field, FormMessage } from "./fields";
++
++const IDLE: FormState = { status: "idle" };
++
++export function ProfileForm({
++  name,
++  phone,
++  marketing,
++}: {
++  name: string;
++  phone: string | null;
++  marketing: boolean;
++}) {
++  const [state, action, pending] = useActionState(saveProfile, IDLE);
++  return (
++    <form action={action} className="grid gap-4 sm:grid-cols-2">
++      <Field
++        label="Seu nome"
++        name="name"
++        defaultValue={name}
++        autoComplete="name"
++        required
++        state={state}
++      />
++      <Field
++        label="WhatsApp com DDD"
++        name="phone"
++        type="tel"
++        inputMode="numeric"
++        defaultValue={phone ?? ""}
++        autoComplete="tel-national"
++        state={state}
++      />
++      <label className="text-ink-600 flex items-start gap-3 text-sm sm:col-span-2">
++        <input
++          type="checkbox"
++          name="marketing"
++          defaultChecked={marketing}
++          className="accent-forest-900 mt-0.5 size-5 shrink-0"
++        />
++        <span>Quero receber ofertas e novidades por e-mail e WhatsApp.</span>
++      </label>
++      <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
++        <button type="submit" disabled={pending} className={BTN_PRIMARY}>
++          {pending ? "Salvando…" : "Salvar dados"}
++        </button>
++        <FormMessage state={state} />
++      </div>
++    </form>
++  );
++}
+diff --git a/src/modules/conta/actions.ts b/src/modules/conta/actions.ts
+new file mode 100644
+index 0000000..68a5cd6
+--- /dev/null
++++ b/src/modules/conta/actions.ts
+@@ -0,0 +1,294 @@
++"use server";
++
++import { refresh } from "next/cache";
++import { redirect } from "next/navigation";
++import { siteUrl } from "@/lib/site";
++import { createClient } from "@/lib/supabase/server";
++import {
++  addressSchema,
++  emailSchema,
++  passwordSchema,
++  profileSchema,
++  signInSchema,
++  signUpSchema,
++  toFormError,
++  type FormState,
++} from "./schemas";
++
++const str = (form: FormData, key: string) => String(form.get(key) ?? "");
++
++/** Devolve junto o que foi digitado (menos a senha), para não apagar o formulário. */
++function keep(form: FormData, state: FormState): FormState {
++  if (state.status !== "error") return state;
++  const values: Record<string, string> = {};
++  for (const [key, value] of form.entries()) {
++    if (
++      typeof value === "string" &&
++      key !== "password" &&
++      !key.startsWith("$")
++    ) {
++      values[key] = value;
++    }
++  }
++  return { ...state, values };
++}
++
++/** Criar conta (D-042). O e-mail de confirmação volta para /auth/callback. */
++export async function signUpCustomer(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const parsed = signUpSchema.safeParse({
++    name: str(form, "name"),
++    email: str(form, "email"),
++    password: str(form, "password"),
++    phone: str(form, "phone"),
++    marketing: form.get("marketing") === "on",
++  });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++
++  const supabase = await createClient();
++  const { data, error } = await supabase.auth.signUp({
++    email: parsed.data.email,
++    password: parsed.data.password,
++    options: {
++      emailRedirectTo: `${siteUrl()}/auth/callback?next=/minha-casa`,
++      data: {
++        name: parsed.data.name,
++        phone: parsed.data.phone ?? "",
++        marketing: parsed.data.marketing,
++      },
++    },
++  });
++  if (error) {
++    if (error.code === "signup_disabled") {
++      return {
++        status: "error",
++        message: "O cadastro ainda não está aberto. Volte em breve.",
++      };
++    }
++    if (error.code === "weak_password") {
++      return {
++        status: "error",
++        message: "Escolha uma senha mais forte.",
++        fieldErrors: {
++          password: ["Use letras e números, com 8 ou mais caracteres."],
++        },
++      };
++    }
++    if (error.status === 429) {
++      return {
++        status: "error",
++        message: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
++      };
++    }
++    console.warn("[conta] signUp:", error.status, error.code);
++    return {
++      status: "error",
++      message: "Não deu para criar a conta agora. Tente de novo.",
++    };
++  }
++  // Sem confirmação de e-mail ligada, a sessão já vem pronta.
++  if (data.session) redirect("/minha-casa");
++  // Mesma resposta para e-mail novo ou já cadastrado, para não revelar quem tem conta.
++  return {
++    status: "ok",
++    message:
++      "Enviamos um e-mail para confirmar a sua conta. Abra o link neste mesmo aparelho.",
++  };
++}
++
++export async function signInCustomer(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const parsed = signInSchema.safeParse({
++    email: str(form, "email"),
++    password: str(form, "password"),
++  });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++
++  const supabase = await createClient();
++  const { error } = await supabase.auth.signInWithPassword(parsed.data);
++  if (error) {
++    if (error.code === "email_not_confirmed") {
++      return {
++        status: "error",
++        message: "Confirme a conta pelo link que enviamos ao seu e-mail.",
++      };
++    }
++    if (error.status === 429) {
++      return {
++        status: "error",
++        message: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
++      };
++    }
++    return { status: "error", message: "E-mail ou senha incorretos." };
++  }
++  redirect("/minha-casa");
++}
++
++export async function signOutCustomer() {
++  const supabase = await createClient();
++  await supabase.auth.signOut();
++  redirect("/entrar");
++}
++
++export async function requestPasswordReset(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const parsed = emailSchema.safeParse({ email: str(form, "email") });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++  const supabase = await createClient();
++  const { error } = await supabase.auth.resetPasswordForEmail(
++    parsed.data.email,
++    {
++      redirectTo: `${siteUrl()}/auth/callback?next=/minha-casa/senha`,
++    },
++  );
++  if (error?.status === 429) {
++    return {
++      status: "error",
++      message: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
++    };
++  }
++  if (error) console.warn("[conta] resetPassword:", error.status, error.code);
++  return {
++    status: "ok",
++    message:
++      "Se este e-mail tiver conta, você vai receber um link para criar uma senha nova.",
++  };
++}
++
++export async function updatePassword(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const parsed = passwordSchema.safeParse({ password: str(form, "password") });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++  const supabase = await createClient();
++  const { data: claims } = await supabase.auth.getClaims();
++  if (!claims?.claims?.sub) {
++    return {
++      status: "error",
++      message: "O link expirou. Peça um novo em “Esqueci a senha”.",
++    };
++  }
++  const { error } = await supabase.auth.updateUser({
++    password: parsed.data.password,
++  });
++  if (error) {
++    return {
++      status: "error",
++      message:
++        error.code === "same_password"
++          ? "A senha nova precisa ser diferente da atual."
++          : "Não deu para trocar a senha. Tente de novo.",
++    };
++  }
++  return { status: "ok", message: "Senha trocada." };
++}
++
++export async function saveProfile(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const parsed = profileSchema.safeParse({
++    name: str(form, "name"),
++    phone: str(form, "phone"),
++    marketing: form.get("marketing") === "on",
++  });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++  const supabase = await createClient();
++  const { data: claims } = await supabase.auth.getClaims();
++  const userId = claims?.claims?.sub;
++  if (!userId)
++    return { status: "error", message: "Entre na sua conta de novo." };
++  const { error } = await supabase
++    .from("customers")
++    .update({
++      name: parsed.data.name,
++      phone: parsed.data.phone,
++      marketing_consent: parsed.data.marketing,
++      marketing_consent_at: parsed.data.marketing
++        ? new Date().toISOString()
++        : null,
++    })
++    .eq("id", userId);
++  if (error) {
++    console.error("[conta] salvar dados falhou:", error.message);
++    return { status: "error", message: "Não deu para salvar. Tente de novo." };
++  }
++  refresh();
++  return { status: "ok", message: "Dados salvos." };
++}
++
++export async function saveAddress(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const id = str(form, "id");
++  const parsed = addressSchema.safeParse({
++    ...(id ? { id } : {}),
++    label: str(form, "label"),
++    recipient: str(form, "recipient"),
++    cep: str(form, "cep"),
++    street: str(form, "street"),
++    number: str(form, "number"),
++    complement: str(form, "complement"),
++    district: str(form, "district"),
++    city: str(form, "city"),
++    state: str(form, "state"),
++    reference: str(form, "reference"),
++    isDefault: form.get("isDefault") === "on",
++  });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++  const { id: addressId, isDefault, ...fields } = parsed.data;
++  const supabase = await createClient();
++  const { data: claims } = await supabase.auth.getClaims();
++  if (!claims?.claims?.sub) {
++    return { status: "error", message: "Entre na sua conta de novo." };
++  }
++  // customer_id vem do banco (auth.uid()); o RLS barra endereço de outra conta.
++  const row = { ...fields, ...(isDefault ? { is_default: true } : {}) };
++  const { error } = addressId
++    ? await supabase.from("customer_addresses").update(row).eq("id", addressId)
++    : await supabase.from("customer_addresses").insert(row);
++  if (error) {
++    const full = error.message.includes("Limite de 10");
++    if (!full) console.error("[conta] salvar endereço falhou:", error.message);
++    return keep(form, {
++      status: "error",
++      message: full
++        ? "Sua conta já tem 10 endereços. Apague um para cadastrar outro."
++        : "Não deu para salvar o endereço. Tente de novo.",
++    });
++  }
++  refresh();
++  return { status: "ok", message: "Endereço salvo." };
++}
++
++export async function deleteAddress(form: FormData): Promise<void> {
++  const id = str(form, "id");
++  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
++  const supabase = await createClient();
++  const { error } = await supabase
++    .from("customer_addresses")
++    .delete()
++    .eq("id", id);
++  if (error) console.error("[conta] apagar endereço falhou:", error.message);
++  refresh();
++}
++
++export async function makeDefaultAddress(form: FormData): Promise<void> {
++  const id = str(form, "id");
++  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
++  const supabase = await createClient();
++  const { error } = await supabase
++    .from("customer_addresses")
++    .update({ is_default: true })
++    .eq("id", id);
++  if (error) console.error("[conta] endereço principal falhou:", error.message);
++  refresh();
++}
+diff --git a/src/modules/conta/queries.ts b/src/modules/conta/queries.ts
+new file mode 100644
+index 0000000..566fd0e
+--- /dev/null
++++ b/src/modules/conta/queries.ts
+@@ -0,0 +1,117 @@
++import "server-only";
++import { cache } from "react";
++import { createClient } from "@/lib/supabase/server";
++
++export type CustomerAddress = {
++  id: string;
++  label: string;
++  recipient: string | null;
++  cep: string;
++  street: string;
++  number: string;
++  complement: string | null;
++  district: string;
++  city: string;
++  state: string;
++  reference: string | null;
++  is_default: boolean;
++};
++
++export type CustomerAccount = {
++  id: string;
++  name: string;
++  email: string;
++  phone: string | null;
++  marketing_consent: boolean;
++  addresses: CustomerAddress[];
++};
++
++/**
++ * Conta de quem está logado, ou null. Na primeira vez depois de confirmar o
++ * e-mail, a linha da conta é criada com o nome e o celular informados no
++ * cadastro. O RLS garante que cada pessoa só alcança o que é dela.
++ */
++export const getCustomerAccount = cache(
++  async (): Promise<CustomerAccount | null> => {
++    const supabase = await createClient();
++    const { data: claims } = await supabase.auth.getClaims();
++    const userId = claims?.claims?.sub;
++    if (!userId) return null;
++
++    const fields = "id, name, email, phone, marketing_consent";
++    let { data: customer } = await supabase
++      .from("customers")
++      .select(fields)
++      .eq("id", userId)
++      .maybeSingle();
++
++    if (!customer) {
++      const meta = (claims.claims.user_metadata ?? {}) as Record<
++        string,
++        unknown
++      >;
++      const email =
++        typeof claims.claims.email === "string" ? claims.claims.email : "";
++      const rawName = typeof meta.name === "string" ? meta.name.trim() : "";
++      const rawPhone = typeof meta.phone === "string" ? meta.phone : "";
++      const { data: created, error } = await supabase
++        .from("customers")
++        .insert({
++          id: userId,
++          name:
++            rawName.length >= 2
++              ? rawName.slice(0, 80)
++              : email.split("@")[0] || "Cliente",
++          email,
++          phone: /^[0-9]{10,13}$/.test(rawPhone) ? rawPhone : null,
++          marketing_consent: meta.marketing === true,
++        })
++        .select(fields)
++        .maybeSingle();
++      if (error) {
++        console.error("[conta] criar conta falhou:", error.message);
++        return null;
++      }
++      customer = created;
++    }
++    if (!customer) return null;
++
++    const { data: addresses } = await supabase
++      .from("customer_addresses")
++      .select(
++        "id, label, recipient, cep, street, number, complement, district, city, state, reference, is_default",
++      )
++      .eq("customer_id", userId)
++      .order("is_default", { ascending: false })
++      .order("created_at", { ascending: true });
++
++    return { ...customer, addresses: (addresses ?? []) as CustomerAddress[] };
++  },
++);
++
++export type CustomerRow = {
++  id: string;
++  name: string;
++  email: string;
++  phone: string | null;
++  marketing_consent: boolean;
++  created_at: string;
++  addresses: { city: string; state: string; is_default: boolean }[];
++};
++
++/** Lista para o painel. O RLS só devolve linhas para owner e admin. */
++export async function listCustomers(limit = 500): Promise<CustomerRow[]> {
++  const supabase = await createClient();
++  const { data, error } = await supabase
++    .from("customers")
++    .select(
++      "id, name, email, phone, marketing_consent, created_at, addresses:customer_addresses(city, state, is_default)",
++    )
++    .order("created_at", { ascending: false })
++    .limit(limit);
++  if (error) {
++    console.error("[conta] listar clientes falhou:", error.message);
++    return [];
++  }
++  return (data ?? []) as CustomerRow[];
++}
+diff --git a/src/modules/conta/schemas.ts b/src/modules/conta/schemas.ts
+new file mode 100644
+index 0000000..7c3c9a2
+--- /dev/null
++++ b/src/modules/conta/schemas.ts
+@@ -0,0 +1,158 @@
++import { z } from "zod";
++
++const digits = (v: string) => v.replace(/\D/g, "");
++const optional = (max: number, msg: string) =>
++  z
++    .string()
++    .trim()
++    .max(max, msg)
++    .transform((v) => (v === "" ? null : v));
++
++const email = z
++  .string()
++  .trim()
++  .toLowerCase()
++  .max(160, "E-mail muito longo.")
++  .pipe(z.email("Informe um e-mail válido."));
++const password = z
++  .string()
++  .min(8, "A senha precisa de pelo menos 8 caracteres.")
++  .max(72, "Senha muito longa.");
++const name = z
++  .string()
++  .trim()
++  .min(2, "Informe seu nome.")
++  .max(80, "Nome muito longo.");
++const phone = z
++  .string()
++  .transform(digits)
++  .refine(
++    (v) => v === "" || (v.length >= 10 && v.length <= 13),
++    "Informe o celular com DDD, só números.",
++  )
++  .transform((v) => (v === "" ? null : v));
++
++export const signUpSchema = z.object({
++  name,
++  email,
++  password,
++  phone,
++  marketing: z.boolean(),
++});
++export const signInSchema = z.object({
++  email,
++  password: z.string().min(1, "Informe a senha."),
++});
++export const emailSchema = z.object({ email });
++export const passwordSchema = z.object({ password });
++export const profileSchema = z.object({ name, phone, marketing: z.boolean() });
++
++export const UF = [
++  "AC",
++  "AL",
++  "AP",
++  "AM",
++  "BA",
++  "CE",
++  "DF",
++  "ES",
++  "GO",
++  "MA",
++  "MT",
++  "MS",
++  "MG",
++  "PA",
++  "PB",
++  "PR",
++  "PE",
++  "PI",
++  "RJ",
++  "RN",
++  "RS",
++  "RO",
++  "RR",
++  "SC",
++  "SP",
++  "SE",
++  "TO",
++] as const;
++
++export const addressSchema = z.object({
++  id: z.uuid().optional(),
++  label: z
++    .string()
++    .trim()
++    .min(1, "Dê um nome a este endereço (ex.: Casa).")
++    .max(40, "Nome muito longo."),
++  recipient: optional(80, "Nome muito longo."),
++  cep: z
++    .string()
++    .transform(digits)
++    .refine((v) => v.length === 8, "O CEP tem 8 números."),
++  street: z
++    .string()
++    .trim()
++    .min(1, "Informe a rua.")
++    .max(120, "Rua muito longa."),
++  number: z
++    .string()
++    .trim()
++    .min(1, "Informe o número (ou s/n).")
++    .max(15, "Número muito longo."),
++  complement: optional(60, "Complemento muito longo."),
++  district: z
++    .string()
++    .trim()
++    .min(1, "Informe o bairro.")
++    .max(80, "Bairro muito longo."),
++  city: z
++    .string()
++    .trim()
++    .min(1, "Informe a cidade.")
++    .max(80, "Cidade muito longa."),
++  state: z
++    .string()
++    .trim()
++    .toUpperCase()
++    .refine((v) => (UF as readonly string[]).includes(v), "Escolha o estado."),
++  reference: optional(120, "Referência muito longa."),
++  isDefault: z.boolean(),
++});
++
++export type FormState =
++  | { status: "idle" }
++  | { status: "ok"; message?: string }
++  | {
++      status: "error";
++      message: string;
++      fieldErrors?: Partial<Record<string, string[]>>;
++      /** O que a pessoa digitou, para o formulário não voltar vazio. */
++      values?: Record<string, string>;
++    };
++
++/** Transforma os erros do Zod no formato que os formulários mostram. */
++export function toFormError(error: z.ZodError): FormState {
++  const fieldErrors: Record<string, string[]> = {};
++  for (const issue of error.issues) {
++    (fieldErrors[String(issue.path[0] ?? "form")] ??= []).push(issue.message);
++  }
++  return {
++    status: "error",
++    message: "Revise os campos destacados.",
++    fieldErrors,
++  };
++}
++
++/** Só aceita destino interno da área do cliente (evita redirecionar para fora). */
++export function safeNext(next: string | null | undefined): string {
++  if (!next || !next.startsWith("/minha-casa") || next.includes("//")) {
++    return "/minha-casa";
++  }
++  return next;
++}
++
++/** 49000000 -> 49000-000 */
++export function formatCep(cep: string): string {
++  const d = digits(cep);
++  return d.length === 8 ? `${d.slice(0, 5)}-${d.slice(5)}` : cep;
++}
+diff --git a/src/proxy.ts b/src/proxy.ts
+index 33edae1..cbdd3b2 100644
+--- a/src/proxy.ts
++++ b/src/proxy.ts
+@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
+ import { publicEnv } from "@/lib/env";
+ 
+ /**
+- * Roda antes das rotas /admin e /auth:
++ * Roda antes das rotas /admin, /auth e da área do cliente:
+  * 1) renova a sessão do Supabase (cookies) a cada requisição;
+  * 2) checagem otimista: sem sessão em /admin → tela de login.
+  * A checagem definitiva de papel acontece no servidor (modules/auth) e no RLS.
+@@ -51,5 +51,6 @@ export async function proxy(request: NextRequest) {
+ }
+ 
+ export const config = {
+-  matcher: ["/admin/:path*", "/auth/:path*"],
++  // /minha-casa e /entrar entram só para renovar a sessão do cliente.
++  matcher: ["/admin/:path*", "/auth/:path*", "/minha-casa/:path*", "/entrar"],
+ };
+diff --git a/supabase/migrations/20261116000900_customers.sql b/supabase/migrations/20261116000900_customers.sql
+new file mode 100644
+index 0000000..5a61925
+--- /dev/null
++++ b/supabase/migrations/20261116000900_customers.sql
+@@ -0,0 +1,151 @@
++-- =============================================================================
++-- Emkasa Gourmet — Migration 0009: conta do cliente e endereços (D-042)
++-- Cada pessoa vê e altera só o que é dela. A administração (owner/admin) lê.
++-- A conta guarda vários endereços com nome: casa, trabalho, casa da mãe...
++-- =============================================================================
++
++create table public.customers (
++  id                   uuid primary key references auth.users (id) on delete cascade,
++  name                 text not null check (char_length(name) between 2 and 80),
++  -- Cópia do e-mail de login, preenchida pelo banco (a pessoa não escolhe).
++  email                text not null check (char_length(email) <= 160),
++  phone                text check (phone is null or phone ~ '^[0-9]{10,13}$'),
++  marketing_consent    boolean not null default false,
++  marketing_consent_at timestamptz,
++  created_at           timestamptz not null default now(),
++  updated_at           timestamptz not null default now()
++);
++
++create table public.customer_addresses (
++  id          uuid primary key default gen_random_uuid(),
++  customer_id uuid not null default auth.uid() references public.customers (id) on delete cascade,
++  -- Nome que a pessoa dá: "Casa", "Trabalho", "Casa da mãe".
++  label       text not null check (char_length(label) between 1 and 40),
++  -- Quem recebe neste endereço (pode ser um familiar).
++  recipient   text check (recipient is null or char_length(recipient) <= 80),
++  cep         text not null check (cep ~ '^[0-9]{8}$'),
++  street      text not null check (char_length(street) between 1 and 120),
++  number      text not null check (char_length(number) between 1 and 15),
++  complement  text check (complement is null or char_length(complement) <= 60),
++  district    text not null check (char_length(district) between 1 and 80),
++  city        text not null check (char_length(city) between 1 and 80),
++  state       text not null check (state ~ '^[A-Z]{2}$'),
++  reference   text check (reference is null or char_length(reference) <= 120),
++  is_default  boolean not null default false,
++  created_at  timestamptz not null default now(),
++  updated_at  timestamptz not null default now()
++);
++
++create index customer_addresses_customer_idx on public.customer_addresses (customer_id);
++-- No máximo um endereço principal por pessoa.
++create unique index customer_addresses_one_default
++  on public.customer_addresses (customer_id) where is_default;
++
++create trigger customers_set_updated_at
++  before update on public.customers
++  for each row execute function public.set_updated_at();
++create trigger customer_addresses_set_updated_at
++  before update on public.customer_addresses
++  for each row execute function public.set_updated_at();
++
++-- O e-mail da conta vem sempre do login, nunca do que o navegador mandar.
++create or replace function public.customers_fill_email()
++returns trigger
++language plpgsql
++security definer
++set search_path = ''
++as $$
++begin
++  new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
++  if new.marketing_consent and new.marketing_consent_at is null then
++    new.marketing_consent_at := now();
++  end if;
++  return new;
++end;
++$$;
++create trigger customers_fill_email
++  before insert on public.customers
++  for each row execute function public.customers_fill_email();
++
++-- Endereço principal: o primeiro vira principal sozinho; marcar outro como
++-- principal desmarca o anterior; no máximo 10 endereços por conta.
++create or replace function public.customer_addresses_default()
++returns trigger
++language plpgsql
++set search_path = ''
++as $$
++begin
++  if pg_trigger_depth() > 1 then
++    return new;
++  end if;
++  if tg_op = 'INSERT' and (
++    select count(*) from public.customer_addresses a where a.customer_id = new.customer_id
++  ) >= 10 then
++    raise exception 'Limite de 10 endereços por conta.' using errcode = 'check_violation';
++  end if;
++  if new.is_default then
++    update public.customer_addresses a
++       set is_default = false
++     where a.customer_id = new.customer_id and a.id <> new.id and a.is_default;
++  elsif not exists (
++    select 1 from public.customer_addresses a
++     where a.customer_id = new.customer_id and a.id <> new.id and a.is_default
++  ) then
++    new.is_default := true;
++  end if;
++  return new;
++end;
++$$;
++create trigger customer_addresses_default
++  before insert or update of is_default on public.customer_addresses
++  for each row execute function public.customer_addresses_default();
++
++-- Apagou o principal: o mais recente dos que sobraram assume.
++create or replace function public.customer_addresses_promote()
++returns trigger
++language plpgsql
++set search_path = ''
++as $$
++begin
++  if old.is_default and pg_trigger_depth() = 1 then
++    update public.customer_addresses a
++       set is_default = true
++     where a.id = (
++       select b.id from public.customer_addresses b
++        where b.customer_id = old.customer_id
++        order by b.created_at desc limit 1
++     );
++  end if;
++  return old;
++end;
++$$;
++create trigger customer_addresses_promote
++  after delete on public.customer_addresses
++  for each row execute function public.customer_addresses_promote();
++
++alter table public.customers          enable row level security;
++alter table public.customer_addresses enable row level security;
++
++create policy "customers: a própria conta ou a administração"
++  on public.customers for select to authenticated
++  using (id = (select auth.uid()) or public.is_manager());
++create policy "customers: criar a própria conta"
++  on public.customers for insert to authenticated
++  with check (id = (select auth.uid()));
++create policy "customers: alterar a própria conta"
++  on public.customers for update to authenticated
++  using (id = (select auth.uid())) with check (id = (select auth.uid()));
++
++create policy "customer_addresses: os próprios endereços"
++  on public.customer_addresses for all to authenticated
++  using (customer_id = (select auth.uid()))
++  with check (customer_id = (select auth.uid()));
++create policy "customer_addresses: a administração lê"
++  on public.customer_addresses for select to authenticated
++  using (public.is_manager());
++
++revoke all on public.customers, public.customer_addresses from public, anon, authenticated;
++grant select on public.customers to authenticated;
++grant insert (id, name, email, phone, marketing_consent) on public.customers to authenticated;
++grant update (name, phone, marketing_consent, marketing_consent_at) on public.customers to authenticated;
++grant select, insert, update, delete on public.customer_addresses to authenticated;
+diff --git a/tests/db/customers.test.ts b/tests/db/customers.test.ts
+new file mode 100644
+index 0000000..e47b146
+--- /dev/null
++++ b/tests/db/customers.test.ts
+@@ -0,0 +1,172 @@
++import type { PGlite } from "@electric-sql/pglite";
++import { beforeAll, describe, expect, it } from "vitest";
++import { as, createTestDb, createUser } from "./harness";
++
++const ANA = "00000000-0000-0000-0000-0000000000d1";
++const BIA = "00000000-0000-0000-0000-0000000000d2";
++const OWNER = "00000000-0000-0000-0000-0000000000d3";
++const OPERACAO = "00000000-0000-0000-0000-0000000000d4";
++let db: PGlite;
++
++type Who = { userId: string } | { anon: true };
++const run = (who: Who, sql: string, params: unknown[] = []) =>
++  as(db, who, async () => (await db.query(sql, params)).rows);
++const addAddress = (userId: string, label: string, isDefault = false) =>
++  run(
++    { userId },
++    `insert into public.customer_addresses (label, cep, street, number, district, city, state, is_default)
++     values ($1, '49000000', 'Rua A', '10', 'Centro', 'Aracaju', 'SE', $2) returning id, is_default`,
++    [label, isDefault],
++  );
++
++beforeAll(async () => {
++  db = await createTestDb();
++  await createUser(db, ANA);
++  await createUser(db, BIA);
++  await createUser(db, OWNER, "owner");
++  await createUser(db, OPERACAO, "operacao");
++  for (const id of [ANA, BIA]) {
++    await run(
++      { userId: id },
++      "insert into public.customers (id, name, email) values ($1, 'Cliente Teste', 'falso@invasor.com')",
++      [id],
++    );
++  }
++});
++
++describe("conta do cliente", () => {
++  it("o e-mail vem do login, não do que o navegador manda", async () => {
++    const rows = await run(
++      { userId: ANA },
++      "select email from public.customers",
++    );
++    expect(rows).toHaveLength(1);
++    expect((rows[0] as { email: string }).email).not.toBe("falso@invasor.com");
++  });
++
++  it("ninguém cria conta em nome de outra pessoa", async () => {
++    await expect(
++      run(
++        { userId: ANA },
++        "insert into public.customers (id, name, email) values ($1, 'Outra', 'x@y.com')",
++        [OWNER],
++      ),
++    ).rejects.toThrow();
++  });
++
++  it("cada pessoa vê só a própria conta; a administração vê todas; a operação não", async () => {
++    expect(
++      await run({ userId: ANA }, "select id from public.customers"),
++    ).toEqual([{ id: ANA }]);
++    expect(
++      await run({ userId: OWNER }, "select id from public.customers"),
++    ).toHaveLength(2);
++    expect(
++      await run({ userId: OPERACAO }, "select id from public.customers"),
++    ).toHaveLength(0);
++    await expect(
++      run({ anon: true }, "select id from public.customers"),
++    ).rejects.toThrow();
++  });
++
++  it("a pessoa altera os próprios dados, mas não o e-mail nem a conta de outra", async () => {
++    await run(
++      { userId: ANA },
++      "update public.customers set name = 'Ana Maria' where id = $1",
++      [ANA],
++    );
++    await expect(
++      run(
++        { userId: ANA },
++        "update public.customers set email = 'troca@x.com' where id = $1",
++        [ANA],
++      ),
++    ).rejects.toThrow();
++    await run(
++      { userId: ANA },
++      "update public.customers set name = 'Invadida' where id = $1",
++      [BIA],
++    );
++    const bia = await run({ userId: BIA }, "select name from public.customers");
++    expect(bia).toEqual([{ name: "Cliente Teste" }]);
++  });
++});
++
++describe("endereços da conta", () => {
++  it("o primeiro endereço vira o principal sozinho", async () => {
++    const [casa] = (await addAddress(ANA, "Casa")) as { is_default: boolean }[];
++    expect(casa.is_default).toBe(true);
++  });
++
++  it("marcar outro como principal desmarca o anterior", async () => {
++    await addAddress(ANA, "Trabalho", true);
++    const rows = await run(
++      { userId: ANA },
++      "select label from public.customer_addresses where is_default",
++    );
++    expect(rows).toEqual([{ label: "Trabalho" }]);
++  });
++
++  it("apagar o principal promove outro", async () => {
++    await run(
++      { userId: ANA },
++      "delete from public.customer_addresses where label = 'Trabalho'",
++    );
++    const rows = await run(
++      { userId: ANA },
++      "select label, is_default from public.customer_addresses",
++    );
++    expect(rows).toEqual([{ label: "Casa", is_default: true }]);
++  });
++
++  it("uma pessoa não lê, altera nem apaga endereço de outra", async () => {
++    expect(
++      await run({ userId: BIA }, "select id from public.customer_addresses"),
++    ).toHaveLength(0);
++    await run(
++      { userId: BIA },
++      "update public.customer_addresses set street = 'Invadida'",
++    );
++    await run({ userId: BIA }, "delete from public.customer_addresses");
++    const rows = await run(
++      { userId: ANA },
++      "select street from public.customer_addresses",
++    );
++    expect(rows).toEqual([{ street: "Rua A" }]);
++    await expect(
++      run(
++        { userId: BIA },
++        `insert into public.customer_addresses (customer_id, label, cep, street, number, district, city, state)
++         values ($1, 'X', '49000000', 'R', '1', 'B', 'C', 'SE')`,
++        [ANA],
++      ),
++    ).rejects.toThrow();
++  });
++
++  it("a administração lê os endereços; a operação e o visitante não", async () => {
++    expect(
++      await run({ userId: OWNER }, "select id from public.customer_addresses"),
++    ).toHaveLength(1);
++    expect(
++      await run(
++        { userId: OPERACAO },
++        "select id from public.customer_addresses",
++      ),
++    ).toHaveLength(0);
++    await expect(
++      run({ anon: true }, "select id from public.customer_addresses"),
++    ).rejects.toThrow();
++  });
++
++  it("limita a 10 endereços por conta e recusa CEP inválido", async () => {
++    for (let i = 0; i < 9; i++) await addAddress(ANA, `Extra ${i}`);
++    await expect(addAddress(ANA, "Onze")).rejects.toThrow(/Limite/);
++    await expect(
++      run(
++        { userId: BIA },
++        `insert into public.customer_addresses (label, cep, street, number, district, city, state)
++         values ('Casa', '123', 'R', '1', 'B', 'C', 'SE')`,
++      ),
++    ).rejects.toThrow();
++  });
++});
+diff --git a/tests/unit/conta.test.ts b/tests/unit/conta.test.ts
+new file mode 100644
+index 0000000..e55cdae
+--- /dev/null
++++ b/tests/unit/conta.test.ts
+@@ -0,0 +1,71 @@
++import { describe, expect, it } from "vitest";
++import {
++  addressSchema,
++  formatCep,
++  safeNext,
++  signUpSchema,
++} from "@/modules/conta/schemas";
++
++describe("cadastro de conta", () => {
++  const ok = {
++    name: " Ana ",
++    email: " Ana@Exemplo.com ",
++    password: "segredo123",
++    phone: "(79) 99999-0000",
++    marketing: false,
++  };
++  it("limpa nome, e-mail e celular", () => {
++    expect(signUpSchema.parse(ok)).toMatchObject({
++      name: "Ana",
++      email: "ana@exemplo.com",
++      phone: "79999990000",
++    });
++  });
++  it("celular vazio vira nulo; senha curta é recusada", () => {
++    expect(signUpSchema.parse({ ...ok, phone: "" }).phone).toBeNull();
++    expect(signUpSchema.safeParse({ ...ok, password: "1234567" }).success).toBe(
++      false,
++    );
++  });
++});
++
++describe("endereço", () => {
++  const ok = {
++    label: "Casa da mãe",
++    recipient: "",
++    cep: "49000-000",
++    street: "Rua A",
++    number: "10",
++    complement: "",
++    district: "Centro",
++    city: "Aracaju",
++    state: "se",
++    reference: "",
++    isDefault: false,
++  };
++  it("normaliza CEP e estado e esvazia opcionais", () => {
++    expect(addressSchema.parse(ok)).toMatchObject({
++      cep: "49000000",
++      state: "SE",
++      recipient: null,
++      complement: null,
++    });
++  });
++  it("recusa CEP incompleto e estado que não existe", () => {
++    expect(addressSchema.safeParse({ ...ok, cep: "4900" }).success).toBe(false);
++    expect(addressSchema.safeParse({ ...ok, state: "XX" }).success).toBe(false);
++  });
++  it("mostra o CEP com traço", () => {
++    expect(formatCep("49000000")).toBe("49000-000");
++  });
++});
++
++describe("destino depois do link do e-mail", () => {
++  it("só aceita páginas da área do cliente", () => {
++    expect(safeNext("/minha-casa/senha")).toBe("/minha-casa/senha");
++    expect(safeNext("https://golpe.com")).toBe("/minha-casa");
++    expect(safeNext("/minha-casa//golpe.com")).toBe("/minha-casa");
++    expect(safeNext("/admin")).toBe("/minha-casa");
++    expect(safeNext(null)).toBe("/minha-casa");
++  });
++});

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { availableOf, useDemo } from "@/demo/store";
 import {
   FILTER_GROUPS,
@@ -9,6 +9,8 @@ import {
   type StoreSection,
 } from "@/modules/catalogo/store-types";
 import { filterProducts } from "@/modules/catalogo/store-filter";
+import { loadHouseholdFit } from "@/modules/familia/actions";
+import type { FitSummary } from "@/modules/familia/schemas";
 import { ProductTile } from "./product-tile";
 
 export function Catalog({
@@ -23,6 +25,26 @@ export function Catalog({
   const pathname = usePathname();
   const stock = useDemo((s) => s);
   const [showFilters, setShowFilters] = useState(false);
+  // "Serve para a minha casa" (D-044): só aparece para quem está logado e
+  // cadastrou a família. O resultado vem pronto do banco.
+  const [fit, setFit] = useState<{
+    people: number;
+    bySlug: Record<string, FitSummary>;
+  } | null>(null);
+  const [onlyFit, setOnlyFit] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadHouseholdFit()
+      .then((data) => {
+        if (alive) setFit(data);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const fitOf = (p: StoreProduct): FitSummary | "ok" | undefined =>
+    !fit || p.isDemo ? undefined : (fit.bySlug[p.slug] ?? "ok");
 
   const secao = params.get("secao");
   const categoria = params.get("categoria");
@@ -63,6 +85,20 @@ export function Catalog({
           p.isDemo ? availableOf(stock, p.slug) > 0 : p.available,
       }),
     [products, secao, categoria, busca, sem, dieta, soDisponiveis, stock],
+  );
+
+  // Com o filtro da casa ligado, só passa o que foi conferido e serve:
+  // bloqueado, ficha em revisão e item de demonstração ficam de fora.
+  const shown = useMemo(
+    () =>
+      onlyFit && fit
+        ? results.filter((p) => {
+            if (p.isDemo) return false;
+            const v = fit.bySlug[p.slug]?.verdict;
+            return v !== "blocked" && v !== "unknown";
+          })
+        : results,
+    [results, onlyFit, fit],
   );
 
   const chip =
@@ -217,10 +253,21 @@ export function Catalog({
         </aside>
 
         <section aria-live="polite">
-          <p className="text-ink-600 mb-4 text-sm">
-            {results.length} produto(s)
-          </p>
-          {results.length === 0 ? (
+          {fit && (
+            <button
+              type="button"
+              aria-pressed={onlyFit}
+              onClick={() => setOnlyFit((v) => !v)}
+              className={`fit-toggle mb-4 inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition ${onlyFit ? "border-leaf-700 bg-leaf-700 text-white" : "border-leaf-700/50 text-leaf-700"}`}
+            >
+              <span aria-hidden="true" className="fit-dot" />
+              {onlyFit
+                ? "Mostrando só o que serve para a sua casa"
+                : `Só o que serve para a minha casa (${fit.people} ${fit.people === 1 ? "pessoa" : "pessoas"})`}
+            </button>
+          )}
+          <p className="text-ink-600 mb-4 text-sm">{shown.length} produto(s)</p>
+          {shown.length === 0 ? (
             <div className="bg-sand-200/60 text-ink-600 rounded-(--radius-media) p-6">
               {products.length === 0
                 ? "Ainda não há produtos à venda. Volte em breve."
@@ -228,8 +275,8 @@ export function Catalog({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3">
-              {results.map((p) => (
-                <ProductTile key={p.slug} product={p} />
+              {shown.map((p) => (
+                <ProductTile key={p.slug} product={p} fit={fitOf(p)} />
               ))}
             </div>
           )}

@@ -47,3 +47,55 @@ export async function getHousehold(): Promise<Household> {
     allergens: allergens.data ?? [],
   };
 }
+
+export type FitVerdict = "blocked" | "unknown" | "diet";
+export type FitIssue = {
+  memberId: string;
+  memberName: string;
+  verdict: FitVerdict;
+  reasons: string[];
+};
+export type HouseholdFit = {
+  members: { id: string; name: string }[];
+  /** Por slug de produto: só quem tem impedimento ou dúvida. Quem não aparece, serve. */
+  issues: Record<string, FitIssue[]>;
+};
+
+/**
+ * "Serve para a minha casa?" (D-044). A conta é feita no banco
+ * (household_fit), com regra fixa. Devolve null sem login ou sem ninguém
+ * cadastrado.
+ */
+export async function getHouseholdFit(): Promise<HouseholdFit | null> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims?.sub) return null;
+  const [members, fit] = await Promise.all([
+    supabase
+      .from("household_members")
+      .select("id, name")
+      .order("created_at", { ascending: true }),
+    supabase.rpc("household_fit"),
+  ]);
+  if (!members.data?.length) return null;
+  if (fit.error) {
+    console.error("[familia] conferência falhou:", fit.error.message);
+    return null;
+  }
+  const issues: Record<string, FitIssue[]> = {};
+  for (const row of (fit.data ?? []) as {
+    product_slug: string;
+    member_id: string;
+    member_name: string;
+    verdict: FitVerdict;
+    reasons: string[];
+  }[]) {
+    (issues[row.product_slug] ??= []).push({
+      memberId: row.member_id,
+      memberName: row.member_name,
+      verdict: row.verdict,
+      reasons: row.reasons,
+    });
+  }
+  return { members: members.data, issues };
+}

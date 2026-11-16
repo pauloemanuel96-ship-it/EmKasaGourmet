@@ -3,7 +3,14 @@
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { toFormError, type FormState } from "@/modules/conta/schemas";
-import { HEALTH_CONSENT_TEXT, hasHealthData, memberSchema } from "./schemas";
+import { getHouseholdFit } from "./queries";
+import {
+  HEALTH_CONSENT_TEXT,
+  hasHealthData,
+  memberSchema,
+  summarizeFit,
+  type FitSummary,
+} from "./schemas";
 
 const str = (form: FormData, key: string) => String(form.get(key) ?? "");
 
@@ -118,4 +125,22 @@ export async function revokeHealthConsent(): Promise<void> {
   if (error)
     console.error("[familia] retirar autorização falhou:", error.message);
   refresh();
+}
+
+/**
+ * Resumo para a vitrine da loja: por produto, o pior caso da casa. Chamado
+ * pelo navegador de quem está logado; devolve null para os demais.
+ */
+export async function loadHouseholdFit(): Promise<{
+  people: number;
+  bySlug: Record<string, FitSummary>;
+} | null> {
+  const fit = await getHouseholdFit();
+  if (!fit) return null;
+  const bySlug: Record<string, FitSummary> = {};
+  for (const [slug, issues] of Object.entries(fit.issues)) {
+    const summary = summarizeFit(issues);
+    if (summary) bySlug[slug] = summary;
+  }
+  return { people: fit.members.length, bySlug };
 }

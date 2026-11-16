@@ -1,0 +1,1056 @@
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 7bd3f48..3a266ae 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -163,3 +163,10 @@ A loja passa a ter conta de cliente: criar conta com e-mail e senha, entrar, ped
+ Segurança: cada pessoa lê e altera só a própria conta e os próprios endereços (RLS); owner e admin leem; operação e atendimento não; o e-mail da conta vem do login e a pessoa não consegue trocá-lo pela tabela. Abrir o cadastro não expõe nada novo do catálogo: as regras que liberam leitura a "qualquer logado" já eram públicas. Cliente logado que tentar abrir o painel cai na tela "sem acesso", como qualquer usuário sem papel. As mensagens de cadastro e de senha não revelam se um e-mail já tem conta. Painel: `/admin/clientes`.
+ 
+ Depende de duas configurações no Supabase que só o Paulo faz: abrir o cadastro com confirmação de e-mail e cadastrar um remetente próprio. Sem a primeira, a tela mostra "O cadastro ainda não está aberto".
++
++## D-043 — Família da conta e dado de saúde só do dono · **Aceita (pedido do Paulo, 16/11/2026)**
++A conta passa a guardar as pessoas da casa (até 12): nome ou apelido, quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer (da lista oficial de alergênicos) e objetivo alimentar. Fica na Minha Casa, acima dos endereços.
++
++Dieta, alergia e objetivo são dado pessoal sensível (LGPD art. 11), e muitas vezes de criança. Regras, conferidas pelo banco: (1) só entram com autorização registrada (texto aceito e data na tabela `consents`), pedida no próprio formulário na primeira vez; (2) **só o dono da conta lê**: não existe regra de leitura para a equipe, nem para owner; (3) retirar a autorização apaga dieta, alergias e objetivo de todos na hora e mantém nomes e gostos; (4) nada disso vai para IA nem para marketing. As tabelas ficam no schema `public` com RLS só-do-dono, e não no schema `private` que o SECURITY_AND_PRIVACY previa: no `private` cada leitura precisaria de uma função com privilégio elevado, o que aumenta a superfície sem ganho, já que quem lê é sempre a própria pessoa logada.
++
++Guarda-se o ano de nascimento em vez da idade (a idade muda sozinha). Peso não é coletado: sem uso definido, seria dado de saúde guardado à toa.
+diff --git a/docs/PENDENCIAS.md b/docs/PENDENCIAS.md
+index 9ad324c..3c92a17 100644
+--- a/docs/PENDENCIAS.md
++++ b/docs/PENDENCIAS.md
+@@ -76,7 +76,7 @@ Cada item é um módulo. O de cima destrava os de baixo.
+ 7. 🟠 **Painéis por papel:** owner com tudo (tráfego, funil, origem, contatos, auditoria); admin com financeiro, pedidos e ajustes. Os papéis já existem no banco; falta separar as telas.
+ 8. 🟠 **Integração Google Ads e Meta Ads** (conversões pelo servidor). Precisa das contas de anúncio.
+ 9. ✅ **SEO (base feita em 16/11, D-039):** metadados, dados estruturados de empresa e produto, sitemap e robots. Falta: cadastrar o site no Google Search Console e enviar o sitemap (precisa da sua conta Google), imagem de compartilhamento própria (hoje usa o logo) e textos de descrição dos produtos reais.
+-10. 🟠 **Minha Casa no banco:** foto de perfil ou da família, cada familiar com restrições, o que gosta e não gosta, idade e objetivo. Hoje é protótipo no navegador. Dado de saúde e de criança: consentimento específico e opção de apagar. Decidir se peso entra mesmo (coletar só o que for usado).
++10. ✅ **Família na Minha Casa (construída em 16/11, D-043):** cada pessoa com quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer e objetivo, com autorização de saúde. Falta: foto de perfil ou da família; usar esses perfis para filtrar a loja e o BOX (hoje o BOX ainda usa os perfis de demonstração guardados no navegador); peso, que ficou de fora até haver um uso definido.
+ 11. 🟠 **Assistente do cliente** (botão flutuante) com IA: ajuda na compra e pode propor o cadastro de um familiar, que a pessoa confirma. Precisa da chave da API e de limite de custo por mês.
+ 12. ⚪ **Plantas, mudas e flores sob encomenda.** Entra como uma seção da loja com pedido por orçamento, igual a Encomendas. Definir nome (evitar "Mundo Verde", que é marca de uma rede de lojas), produtos, fotos e preços.
+ 13. ⚪ Envio das ofertas aos contatos (e-mail e WhatsApp): escolher a ferramenta de disparo. Hoje o cadastro só guarda o contato.
+diff --git a/src/components/loja/conta/account-panel.tsx b/src/components/loja/conta/account-panel.tsx
+index 0d1c186..ad12ee2 100644
+--- a/src/components/loja/conta/account-panel.tsx
++++ b/src/components/loja/conta/account-panel.tsx
+@@ -1,7 +1,9 @@
+ import Link from "next/link";
+ import { signOutCustomer } from "@/modules/conta/actions";
+ import { getCustomerAccount } from "@/modules/conta/queries";
++import { getHousehold } from "@/modules/familia/queries";
+ import { AddressManager } from "./address-manager";
++import { FamilyManager } from "./family-manager";
+ import { BTN_GHOST } from "./fields";
+ import { ProfileForm } from "./profile-form";
+ 
+@@ -38,6 +40,8 @@ export async function AccountPanel() {
+     );
+   }
+ 
++  const household = await getHousehold();
++
+   return (
+     <div className="mb-12 flex flex-col gap-10">
+       <section aria-labelledby="conta-dados" className="flex flex-col gap-5">
+@@ -61,6 +65,18 @@ export async function AccountPanel() {
+         />
+       </section>
+ 
++      <section aria-labelledby="conta-familia" className="flex flex-col gap-4">
++        <div>
++          <h2 id="conta-familia" className="text-3xl">
++            Quem mora com você
++          </h2>
++          <p className="text-ink-600">
++            Cada pessoa com o que gosta, o que evita e o que não pode comer.
++          </p>
++        </div>
++        <FamilyManager household={household} />
++      </section>
++
+       <section
+         aria-labelledby="conta-enderecos"
+         className="flex flex-col gap-4"
+diff --git a/src/components/loja/conta/family-manager.tsx b/src/components/loja/conta/family-manager.tsx
+new file mode 100644
+index 0000000..ec640b7
+--- /dev/null
++++ b/src/components/loja/conta/family-manager.tsx
+@@ -0,0 +1,332 @@
++"use client";
++
++import { useActionState, useEffect, useState } from "react";
++import {
++  deleteMember,
++  revokeHealthConsent,
++  saveMember,
++} from "@/modules/familia/actions";
++import type { Household, HouseholdMember } from "@/modules/familia/queries";
++import {
++  ageFrom,
++  DIETS,
++  HEALTH_CONSENT_TEXT,
++  type Diet,
++} from "@/modules/familia/schemas";
++import type { FormState } from "@/modules/conta/schemas";
++import { BTN_GHOST, BTN_PRIMARY, Field, FormMessage, INPUT } from "./fields";
++
++const IDLE: FormState = { status: "idle" };
++
++/**
++ * Pessoas da casa (D-043): quem é, o que gosta, o que evita e o que não pode.
++ * Alergia, dieta e objetivo são dado de saúde: só o dono da conta vê, e só
++ * ficam guardados com autorização, que pode ser retirada aqui mesmo.
++ */
++export function FamilyManager({ household }: { household: Household }) {
++  const [editing, setEditing] = useState<HouseholdMember | "novo" | null>(null);
++  const { members, healthConsent, allergens } = household;
++  const allergenName = (code: string) =>
++    allergens.find((a) => a.code === code)?.name ?? code;
++
++  return (
++    <div className="flex flex-col gap-4">
++      {members.length === 0 && editing === null && (
++        <p className="text-ink-600">
++          Cadastre quem mora com você. Assim dá para avisar quando um produto
++          não serve para alguém da casa.
++        </p>
++      )}
++      <ul className="grid gap-3 sm:grid-cols-2">
++        {members.map((m) => {
++          const age = ageFrom(m.birth_year);
++          return (
++            <li
++              key={m.id}
++              className="border-sand-200 bg-paper flex flex-col gap-2 rounded-(--radius-media) border p-4"
++            >
++              <p className="text-forest-900 font-serif text-xl">
++                {m.name}
++                <span className="text-ink-600 font-sans text-sm font-normal">
++                  {m.relation ? ` · ${m.relation}` : ""}
++                  {age !== null
++                    ? ` · ${age} ${age === 1 ? "ano" : "anos"}`
++                    : ""}
++                </span>
++              </p>
++              <dl className="text-ink-600 flex flex-col gap-1 text-sm">
++                {m.diet !== "sem_restricao" && (
++                  <div>
++                    <dt className="inline font-medium">Dieta: </dt>
++                    <dd className="inline">{DIETS[m.diet]}</dd>
++                  </div>
++                )}
++                {m.allergies.length > 0 && (
++                  <div>
++                    <dt className="text-terracotta-500 inline font-medium">
++                      Não pode:{" "}
++                    </dt>
++                    <dd className="inline">
++                      {m.allergies.map(allergenName).join(", ")}
++                    </dd>
++                  </div>
++                )}
++                {m.likes.length > 0 && (
++                  <div>
++                    <dt className="inline font-medium">Gosta: </dt>
++                    <dd className="inline">{m.likes.join(", ")}</dd>
++                  </div>
++                )}
++                {m.dislikes.length > 0 && (
++                  <div>
++                    <dt className="inline font-medium">Não gosta: </dt>
++                    <dd className="inline">{m.dislikes.join(", ")}</dd>
++                  </div>
++                )}
++                {m.goal && (
++                  <div>
++                    <dt className="inline font-medium">Objetivo: </dt>
++                    <dd className="inline">{m.goal}</dd>
++                  </div>
++                )}
++              </dl>
++              <div className="mt-1 flex flex-wrap gap-2">
++                <button
++                  type="button"
++                  onClick={() => setEditing(m)}
++                  className={BTN_GHOST}
++                >
++                  Alterar
++                </button>
++                <details className="text-sm">
++                  <summary className="text-ink-600 flex min-h-11 cursor-pointer items-center px-2 underline">
++                    Apagar
++                  </summary>
++                  <form action={deleteMember}>
++                    <input type="hidden" name="id" value={m.id} />
++                    <button
++                      type="submit"
++                      className="bg-terracotta-500 min-h-10 rounded-full px-4 font-medium text-white"
++                    >
++                      Apagar {m.name}
++                    </button>
++                  </form>
++                </details>
++              </div>
++            </li>
++          );
++        })}
++      </ul>
++
++      {editing === null ? (
++        members.length < 12 && (
++          <div>
++            <button
++              type="button"
++              onClick={() => setEditing("novo")}
++              className={BTN_PRIMARY}
++            >
++              Cadastrar pessoa
++            </button>
++          </div>
++        )
++      ) : (
++        <MemberForm
++          key={editing === "novo" ? "novo" : editing.id}
++          member={editing === "novo" ? null : editing}
++          allergens={allergens}
++          healthConsent={healthConsent}
++          onDone={() => setEditing(null)}
++        />
++      )}
++
++      {healthConsent && (
++        <details className="text-ink-600 text-sm">
++          <summary className="cursor-pointer underline underline-offset-4">
++            Dados de saúde: autorização ativa
++          </summary>
++          <div className="border-sand-200 mt-3 flex flex-col gap-3 rounded-(--radius-media) border p-4">
++            <p>
++              Você autorizou guardar alergias, dieta e objetivo das pessoas da
++              casa. Só você vê esses dados. Se retirar a autorização, eles são
++              apagados na hora; nomes e gostos continuam.
++            </p>
++            <form action={revokeHealthConsent}>
++              <button
++                type="submit"
++                className="bg-terracotta-500 min-h-10 rounded-full px-4 font-medium text-white"
++              >
++                Retirar a autorização e apagar esses dados
++              </button>
++            </form>
++          </div>
++        </details>
++      )}
++    </div>
++  );
++}
++
++function MemberForm({
++  member,
++  allergens,
++  healthConsent,
++  onDone,
++}: {
++  member: HouseholdMember | null;
++  allergens: Household["allergens"];
++  healthConsent: boolean;
++  onDone: () => void;
++}) {
++  const [state, action, pending] = useActionState(saveMember, IDLE);
++  const kept = state.status === "error" ? state.values : undefined;
++  const consentError =
++    state.status === "error"
++      ? state.fieldErrors?.healthConsent?.[0]
++      : undefined;
++
++  useEffect(() => {
++    if (state.status === "ok") onDone();
++  }, [state.status, onDone]);
++
++  return (
++    <form
++      action={action}
++      className="border-sand-200 bg-paper grid gap-4 rounded-(--radius-media) border p-5 sm:grid-cols-6"
++    >
++      <h3 className="text-2xl sm:col-span-6">
++        {member ? `Alterar ${member.name}` : "Nova pessoa da casa"}
++      </h3>
++      {member && <input type="hidden" name="id" value={member.id} />}
++      <Field
++        className="sm:col-span-3"
++        label="Nome ou apelido"
++        name="name"
++        defaultValue={member?.name ?? ""}
++        required
++        state={state}
++      />
++      <Field
++        className="sm:col-span-2"
++        label="Quem é (opcional)"
++        name="relation"
++        defaultValue={member?.relation ?? ""}
++        placeholder="eu, filho, mãe…"
++        state={state}
++      />
++      <Field
++        className="sm:col-span-1"
++        label="Nasceu em"
++        name="birthYear"
++        inputMode="numeric"
++        defaultValue={member?.birth_year ? String(member.birth_year) : ""}
++        placeholder="ano"
++        state={state}
++      />
++      <Field
++        className="sm:col-span-3"
++        label="Gosta de (opcional)"
++        name="likes"
++        defaultValue={member?.likes.join(", ") ?? ""}
++        hint="Separe por vírgula: banana, abóbora, feijão."
++        state={state}
++      />
++      <Field
++        className="sm:col-span-3"
++        label="Não gosta de (opcional)"
++        name="dislikes"
++        defaultValue={member?.dislikes.join(", ") ?? ""}
++        hint="Separe por vírgula."
++        state={state}
++      />
++
++      <fieldset className="border-sand-200 flex flex-col gap-4 rounded-(--radius-media) border p-4 sm:col-span-6">
++        <legend className="text-forest-900 px-2 text-sm font-medium">
++          Saúde e alimentação (opcional)
++        </legend>
++        <div className="grid gap-4 sm:grid-cols-2">
++          <div>
++            <label
++              htmlFor="campo-diet"
++              className="text-ink-900 mb-1 block text-sm font-medium"
++            >
++              Dieta
++            </label>
++            <select
++              id="campo-diet"
++              name="diet"
++              defaultValue={
++                (kept?.diet as Diet | undefined) ??
++                member?.diet ??
++                "sem_restricao"
++              }
++              className={INPUT}
++            >
++              {Object.entries(DIETS).map(([code, label]) => (
++                <option key={code} value={code}>
++                  {label}
++                </option>
++              ))}
++            </select>
++          </div>
++          <Field
++            label="Objetivo (opcional)"
++            name="goal"
++            defaultValue={member?.goal ?? ""}
++            placeholder="comer mais verduras, menos açúcar…"
++            state={state}
++          />
++        </div>
++        <div>
++          <p className="text-ink-900 mb-2 text-sm font-medium">
++            Não pode comer (alergia ou intolerância)
++          </p>
++          <ul className="flex flex-wrap gap-2">
++            {allergens.map((a) => (
++              <li key={a.code}>
++                <label className="border-sand-200 has-checked:bg-terracotta-500 has-checked:border-terracotta-500 flex min-h-9 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm has-checked:text-white">
++                  <input
++                    type="checkbox"
++                    name="allergies"
++                    value={a.code}
++                    defaultChecked={member?.allergies.includes(a.code)}
++                    className="sr-only"
++                  />
++                  {a.name}
++                </label>
++              </li>
++            ))}
++          </ul>
++        </div>
++        {!healthConsent && (
++          <div>
++            <label className="text-ink-600 flex items-start gap-3 text-sm">
++              <input
++                type="checkbox"
++                name="healthConsent"
++                className="accent-forest-900 mt-0.5 size-5 shrink-0"
++              />
++              <span>{HEALTH_CONSENT_TEXT}</span>
++            </label>
++            {consentError && (
++              <p className="text-terracotta-500 mt-1 text-sm">{consentError}</p>
++            )}
++            <p className="text-ink-600 mt-2 text-xs">
++              Só precisa marcar se preencher dieta, objetivo ou algo que a
++              pessoa não pode comer. Esses dados só você vê.
++            </p>
++          </div>
++        )}
++      </fieldset>
++
++      <div className="flex flex-wrap items-center gap-3 sm:col-span-6">
++        <button type="submit" disabled={pending} className={BTN_PRIMARY}>
++          {pending ? "Salvando…" : "Salvar"}
++        </button>
++        <button type="button" onClick={onDone} className={BTN_GHOST}>
++          Cancelar
++        </button>
++        <FormMessage state={state} />
++      </div>
++    </form>
++  );
++}
+diff --git a/src/modules/familia/actions.ts b/src/modules/familia/actions.ts
+new file mode 100644
+index 0000000..cf0c53b
+--- /dev/null
++++ b/src/modules/familia/actions.ts
+@@ -0,0 +1,121 @@
++"use server";
++
++import { refresh } from "next/cache";
++import { createClient } from "@/lib/supabase/server";
++import { toFormError, type FormState } from "@/modules/conta/schemas";
++import { HEALTH_CONSENT_TEXT, hasHealthData, memberSchema } from "./schemas";
++
++const str = (form: FormData, key: string) => String(form.get(key) ?? "");
++
++function keep(form: FormData, state: FormState): FormState {
++  if (state.status !== "error") return state;
++  const values: Record<string, string> = {};
++  for (const [key, value] of form.entries()) {
++    if (
++      typeof value === "string" &&
++      key !== "allergies" &&
++      !key.startsWith("$")
++    ) {
++      values[key] = value;
++    }
++  }
++  return { ...state, values };
++}
++
++/**
++ * Salva uma pessoa da casa (D-043). Dado de saúde só entra com o
++ * consentimento: se ainda não existe, a caixa do formulário precisa estar
++ * marcada, e o aceite é gravado antes. O banco confere tudo de novo.
++ */
++export async function saveMember(
++  _prev: FormState,
++  form: FormData,
++): Promise<FormState> {
++  const id = str(form, "id");
++  const parsed = memberSchema.safeParse({
++    ...(id ? { id } : {}),
++    name: str(form, "name"),
++    relation: str(form, "relation"),
++    birthYear: str(form, "birthYear"),
++    diet: str(form, "diet") || "sem_restricao",
++    allergies: form.getAll("allergies").map(String),
++    likes: str(form, "likes"),
++    dislikes: str(form, "dislikes"),
++    goal: str(form, "goal"),
++  });
++  if (!parsed.success) return keep(form, toFormError(parsed.error));
++
++  const supabase = await createClient();
++  const { data: claims } = await supabase.auth.getClaims();
++  if (!claims?.claims?.sub) {
++    return { status: "error", message: "Entre na sua conta de novo." };
++  }
++
++  if (hasHealthData(parsed.data)) {
++    const { data: active } = await supabase
++      .from("consents")
++      .select("id")
++      .eq("kind", "health_profile")
++      .is("revoked_at", null)
++      .limit(1);
++    if (!active?.length) {
++      if (form.get("healthConsent") !== "on") {
++        return keep(form, {
++          status: "error",
++          message:
++            "Para guardar alergia, dieta ou objetivo, marque a autorização no fim do formulário.",
++          fieldErrors: { healthConsent: ["Marque para autorizar."] },
++        });
++      }
++      const { error } = await supabase
++        .from("consents")
++        .insert({ kind: "health_profile", consent_text: HEALTH_CONSENT_TEXT });
++      if (error) {
++        console.error("[familia] consentimento falhou:", error.message);
++        return keep(form, {
++          status: "error",
++          message: "Não deu para registrar a autorização. Tente de novo.",
++        });
++      }
++    }
++  }
++
++  const { id: memberId, birthYear, ...rest } = parsed.data;
++  const row = { ...rest, birth_year: birthYear };
++  const { error } = memberId
++    ? await supabase.from("household_members").update(row).eq("id", memberId)
++    : await supabase.from("household_members").insert(row);
++  if (error) {
++    const full = error.message.includes("Limite de 12");
++    if (!full) console.error("[familia] salvar falhou:", error.message);
++    return keep(form, {
++      status: "error",
++      message: full
++        ? "Sua conta já tem 12 pessoas cadastradas."
++        : "Não deu para salvar. Tente de novo.",
++    });
++  }
++  refresh();
++  return { status: "ok", message: "Salvo." };
++}
++
++export async function deleteMember(form: FormData): Promise<void> {
++  const id = str(form, "id");
++  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
++  const supabase = await createClient();
++  const { error } = await supabase
++    .from("household_members")
++    .delete()
++    .eq("id", id);
++  if (error) console.error("[familia] apagar falhou:", error.message);
++  refresh();
++}
++
++/** Retira a autorização e apaga alergias, dietas e objetivos de todos da casa. */
++export async function revokeHealthConsent(): Promise<void> {
++  const supabase = await createClient();
++  const { error } = await supabase.rpc("revoke_health_consent");
++  if (error)
++    console.error("[familia] retirar autorização falhou:", error.message);
++  refresh();
++}
+diff --git a/src/modules/familia/queries.ts b/src/modules/familia/queries.ts
+new file mode 100644
+index 0000000..643dd35
+--- /dev/null
++++ b/src/modules/familia/queries.ts
+@@ -0,0 +1,49 @@
++import "server-only";
++import { createClient } from "@/lib/supabase/server";
++import type { Diet } from "./schemas";
++
++export type HouseholdMember = {
++  id: string;
++  name: string;
++  relation: string | null;
++  birth_year: number | null;
++  diet: Diet;
++  allergies: string[];
++  likes: string[];
++  dislikes: string[];
++  goal: string | null;
++};
++
++export type Household = {
++  members: HouseholdMember[];
++  healthConsent: boolean;
++  allergens: { code: string; name: string }[];
++};
++
++/** Família da conta logada. O RLS só devolve as linhas do próprio dono. */
++export async function getHousehold(): Promise<Household> {
++  const supabase = await createClient();
++  const [members, consent, allergens] = await Promise.all([
++    supabase
++      .from("household_members")
++      .select(
++        "id, name, relation, birth_year, diet, allergies, likes, dislikes, goal",
++      )
++      .order("created_at", { ascending: true }),
++    supabase
++      .from("consents")
++      .select("id")
++      .eq("kind", "health_profile")
++      .is("revoked_at", null)
++      .limit(1),
++    supabase.from("allergens").select("code, name").order("name"),
++  ]);
++  if (members.error) {
++    console.error("[familia] leitura falhou:", members.error.message);
++  }
++  return {
++    members: (members.data ?? []) as HouseholdMember[],
++    healthConsent: (consent.data ?? []).length > 0,
++    allergens: allergens.data ?? [],
++  };
++}
+diff --git a/src/modules/familia/schemas.ts b/src/modules/familia/schemas.ts
+new file mode 100644
+index 0000000..53b1a60
+--- /dev/null
++++ b/src/modules/familia/schemas.ts
+@@ -0,0 +1,78 @@
++import { z } from "zod";
++
++export const DIETS = {
++  sem_restricao: "Sem restrição",
++  vegetariano: "Vegetariana",
++  vegano: "Vegana",
++  sem_gluten: "Sem glúten",
++  sem_lactose: "Sem lactose",
++} as const;
++export type Diet = keyof typeof DIETS;
++
++/** Texto exato do consentimento de saúde. Vai gravado junto com o aceite. */
++export const HEALTH_CONSENT_TEXT =
++  "Autorizo a Emkasa a guardar as alergias, a dieta e o objetivo alimentar das pessoas da minha casa, inclusive crianças pelas quais sou responsável, só para filtrar e sugerir produtos. Posso retirar esta autorização e apagar esses dados quando quiser.";
++
++/** "banana, jiló ,  " -> ["banana", "jiló"] (sem repetidos, no máximo 20). */
++export function parseList(raw: string): string[] {
++  const seen = new Set<string>();
++  for (const part of raw.split(/[,;\n]/)) {
++    const item = part.trim().replace(/\s+/g, " ");
++    if (item) seen.add(item.slice(0, 40));
++    if (seen.size >= 20) break;
++  }
++  return [...seen];
++}
++
++export const memberSchema = z.object({
++  id: z.uuid().optional(),
++  name: z
++    .string()
++    .trim()
++    .min(1, "Informe o nome ou apelido.")
++    .max(40, "Nome muito longo."),
++  relation: z
++    .string()
++    .trim()
++    .max(30, "Texto muito longo.")
++    .transform((v) => (v === "" ? null : v)),
++  birthYear: z
++    .string()
++    .trim()
++    .refine(
++      (v) => v === "" || /^\d{4}$/.test(v),
++      "Informe o ano com 4 números.",
++    )
++    .transform((v) => (v === "" ? null : Number(v)))
++    .refine(
++      (v) => v === null || (v >= 1900 && v <= new Date().getFullYear()),
++      "Confira o ano de nascimento.",
++    ),
++  diet: z.enum(Object.keys(DIETS) as [Diet, ...Diet[]]),
++  allergies: z.array(z.string().regex(/^[a-z0-9_]+$/)).max(30),
++  likes: z.string().max(900).transform(parseList),
++  dislikes: z.string().max(900).transform(parseList),
++  goal: z
++    .string()
++    .trim()
++    .max(160, "Use até 160 letras.")
++    .transform((v) => (v === "" ? null : v)),
++});
++export type MemberInput = z.infer<typeof memberSchema>;
++
++/** Esta pessoa tem algum dado de saúde preenchido? */
++export function hasHealthData(
++  m: Pick<MemberInput, "allergies" | "diet" | "goal">,
++) {
++  return (
++    m.allergies.length > 0 || m.diet !== "sem_restricao" || m.goal !== null
++  );
++}
++
++/** Idade aproximada a partir do ano de nascimento. */
++export function ageFrom(
++  birthYear: number | null,
++  now = new Date(),
++): number | null {
++  return birthYear === null ? null : Math.max(0, now.getFullYear() - birthYear);
++}
+diff --git a/supabase/migrations/20261116001000_household.sql b/supabase/migrations/20261116001000_household.sql
+new file mode 100644
+index 0000000..7c9e9fe
+--- /dev/null
++++ b/supabase/migrations/20261116001000_household.sql
+@@ -0,0 +1,139 @@
++-- =============================================================================
++-- Emkasa Gourmet — Migration 0010: família da conta (D-043)
++-- Cada pessoa da casa, com o que come, o que evita e o que não pode.
++-- Alergia, dieta e objetivo são dado de saúde (LGPD art. 11): só entram com
++-- consentimento registrado, e SÓ O DONO DA CONTA lê. Nem a administração vê.
++-- =============================================================================
++
++-- Registro de consentimentos da conta (texto aceito, quando, e se foi retirado).
++create table public.consents (
++  id          uuid primary key default gen_random_uuid(),
++  customer_id uuid not null default auth.uid() references public.customers (id) on delete cascade,
++  kind        text not null check (kind in ('health_profile')),
++  consent_text text not null check (char_length(consent_text) between 20 and 600),
++  granted_at  timestamptz not null default now(),
++  revoked_at  timestamptz
++);
++create index consents_customer_idx on public.consents (customer_id, kind);
++
++create table public.household_members (
++  id          uuid primary key default gen_random_uuid(),
++  customer_id uuid not null default auth.uid() references public.customers (id) on delete cascade,
++  name        text not null check (char_length(name) between 1 and 40),
++  -- Quem é na família: "filho", "mãe", "eu". Texto livre e curto.
++  relation    text check (relation is null or char_length(relation) <= 30),
++  -- Ano de nascimento em vez de idade: a idade muda sozinha.
++  birth_year  smallint check (birth_year is null or birth_year between 1900 and 2100),
++  diet        text not null default 'sem_restricao'
++              check (diet in ('sem_restricao', 'vegano', 'vegetariano', 'sem_gluten', 'sem_lactose')),
++  -- Códigos da tabela allergens (conferidos por trigger).
++  allergies   text[] not null default '{}',
++  likes       text[] not null default '{}',
++  dislikes    text[] not null default '{}',
++  goal        text check (goal is null or char_length(goal) <= 160),
++  created_at  timestamptz not null default now(),
++  updated_at  timestamptz not null default now(),
++  check (cardinality(allergies) <= 30),
++  check (cardinality(likes) <= 20),
++  check (cardinality(dislikes) <= 20)
++);
++create index household_members_customer_idx on public.household_members (customer_id);
++
++create trigger household_members_set_updated_at
++  before update on public.household_members
++  for each row execute function public.set_updated_at();
++
++-- Consentimento de saúde em vigor para a conta?
++create or replace function public.has_health_consent(p_customer uuid)
++returns boolean
++language sql
++stable
++set search_path = ''
++as $$
++  select exists (
++    select 1 from public.consents c
++     where c.customer_id = p_customer and c.kind = 'health_profile' and c.revoked_at is null
++  );
++$$;
++
++-- Regras da pessoa da casa: alergênico tem de existir; dado de saúde exige
++-- consentimento; textos livres curtos; no máximo 12 pessoas por conta.
++create or replace function public.household_members_check()
++returns trigger
++language plpgsql
++set search_path = ''
++as $$
++declare
++  v_bad text;
++begin
++  if tg_op = 'INSERT' and (
++    select count(*) from public.household_members m where m.customer_id = new.customer_id
++  ) >= 12 then
++    raise exception 'Limite de 12 pessoas por conta.' using errcode = 'check_violation';
++  end if;
++
++  select a into v_bad from unnest(new.allergies) a
++   where not exists (select 1 from public.allergens g where g.code = a) limit 1;
++  if v_bad is not null then
++    raise exception 'Alergênico desconhecido: %', v_bad using errcode = 'check_violation';
++  end if;
++
++  if exists (select 1 from unnest(new.likes || new.dislikes) t where char_length(t) not between 1 and 40) then
++    raise exception 'Cada item de gosto precisa ter de 1 a 40 letras.' using errcode = 'check_violation';
++  end if;
++
++  if (cardinality(new.allergies) > 0 or new.diet <> 'sem_restricao' or new.goal is not null)
++     and not public.has_health_consent(new.customer_id) then
++    raise exception 'Falta o consentimento para guardar dados de saúde.' using errcode = 'check_violation';
++  end if;
++  return new;
++end;
++$$;
++create trigger household_members_check
++  before insert or update on public.household_members
++  for each row execute function public.household_members_check();
++
++-- Retirar o consentimento apaga os dados de saúde de todos da casa, na hora.
++create or replace function public.revoke_health_consent()
++returns void
++language plpgsql
++set search_path = ''
++as $$
++begin
++  update public.household_members
++     set allergies = '{}', diet = 'sem_restricao', goal = null
++   where customer_id = (select auth.uid());
++  update public.consents
++     set revoked_at = now()
++   where customer_id = (select auth.uid()) and kind = 'health_profile' and revoked_at is null;
++end;
++$$;
++
++alter table public.consents          enable row level security;
++alter table public.household_members enable row level security;
++
++-- Dono da conta e mais ninguém. Não existe regra de leitura para a equipe.
++create policy "consents: só o dono lê"
++  on public.consents for select to authenticated
++  using (customer_id = (select auth.uid()));
++create policy "consents: só o dono registra"
++  on public.consents for insert to authenticated
++  with check (customer_id = (select auth.uid()));
++create policy "consents: só o dono retira"
++  on public.consents for update to authenticated
++  using (customer_id = (select auth.uid()))
++  with check (customer_id = (select auth.uid()));
++
++create policy "household_members: só o dono"
++  on public.household_members for all to authenticated
++  using (customer_id = (select auth.uid()))
++  with check (customer_id = (select auth.uid()));
++
++revoke all on public.consents, public.household_members from public, anon, authenticated;
++grant select on public.consents to authenticated;
++grant insert (kind, consent_text) on public.consents to authenticated;
++grant update (revoked_at) on public.consents to authenticated;
++grant select, insert, update, delete on public.household_members to authenticated;
++revoke execute on function public.revoke_health_consent() from public, anon;
++grant execute on function public.revoke_health_consent() to authenticated;
++grant execute on function public.has_health_consent(uuid) to authenticated;
+diff --git a/tests/db/household.test.ts b/tests/db/household.test.ts
+new file mode 100644
+index 0000000..9852483
+--- /dev/null
++++ b/tests/db/household.test.ts
+@@ -0,0 +1,161 @@
++import type { PGlite } from "@electric-sql/pglite";
++import { beforeAll, describe, expect, it } from "vitest";
++import { as, createTestDb, createUser } from "./harness";
++
++const ANA = "00000000-0000-0000-0000-0000000000e1";
++const BIA = "00000000-0000-0000-0000-0000000000e2";
++const OWNER = "00000000-0000-0000-0000-0000000000e3";
++const TEXT =
++  "Autorizo a Emkasa a guardar alergias, dieta e objetivos das pessoas da minha casa.";
++let db: PGlite;
++
++type Who = { userId: string } | { anon: true };
++const run = (who: Who, sql: string, params: unknown[] = []) =>
++  as(db, who, async () => (await db.query(sql, params)).rows);
++const consent = (userId: string) =>
++  run(
++    { userId },
++    "insert into public.consents (kind, consent_text) values ('health_profile', $1)",
++    [TEXT],
++  );
++
++beforeAll(async () => {
++  db = await createTestDb();
++  await createUser(db, ANA);
++  await createUser(db, BIA);
++  await createUser(db, OWNER, "owner");
++  for (const id of [ANA, BIA, OWNER]) {
++    await run(
++      { userId: id },
++      "insert into public.customers (id, name, email) values ($1, 'Cliente', 'x@x.com')",
++      [id],
++    );
++  }
++});
++
++describe("família da conta", () => {
++  it("pessoa sem dado de saúde entra sem consentimento", async () => {
++    await run(
++      { userId: ANA },
++      "insert into public.household_members (name, relation, likes, dislikes) values ('Léo', 'filho', '{banana}', '{jiló}')",
++    );
++    expect(
++      await run({ userId: ANA }, "select name from public.household_members"),
++    ).toEqual([{ name: "Léo" }]);
++  });
++
++  it("alergia, dieta ou objetivo exigem consentimento registrado", async () => {
++    for (const set of [
++      "allergies = '{leite}'",
++      "diet = 'vegano'",
++      "goal = 'comer mais verduras'",
++    ]) {
++      await expect(
++        run({ userId: ANA }, `update public.household_members set ${set}`),
++      ).rejects.toThrow(/consentimento/);
++    }
++    await consent(ANA);
++    await run(
++      { userId: ANA },
++      "update public.household_members set allergies = '{leite,soja}', diet = 'vegetariano'",
++    );
++    const rows = await run(
++      { userId: ANA },
++      "select allergies, diet from public.household_members",
++    );
++    expect(rows).toEqual([
++      { allergies: ["leite", "soja"], diet: "vegetariano" },
++    ]);
++  });
++
++  it("recusa alergênico que não existe na lista oficial", async () => {
++    await expect(
++      run(
++        { userId: ANA },
++        "update public.household_members set allergies = '{kriptonita}'",
++      ),
++    ).rejects.toThrow(/desconhecido/);
++  });
++
++  it("só o dono lê: outra cliente, a administração e o visitante não veem nada", async () => {
++    expect(
++      await run({ userId: BIA }, "select id from public.household_members"),
++    ).toHaveLength(0);
++    expect(
++      await run({ userId: OWNER }, "select id from public.household_members"),
++    ).toHaveLength(0);
++    expect(
++      await run({ userId: OWNER }, "select id from public.consents"),
++    ).toHaveLength(0);
++    await expect(
++      run({ anon: true }, "select id from public.household_members"),
++    ).rejects.toThrow();
++  });
++
++  it("ninguém cadastra, altera ou apaga pessoa na conta de outra", async () => {
++    await expect(
++      run(
++        { userId: BIA },
++        "insert into public.household_members (customer_id, name) values ($1, 'Intrusa')",
++        [ANA],
++      ),
++    ).rejects.toThrow();
++    await run(
++      { userId: BIA },
++      "update public.household_members set name = 'Trocado'",
++    );
++    await run({ userId: BIA }, "delete from public.household_members");
++    expect(
++      await run({ userId: ANA }, "select name from public.household_members"),
++    ).toEqual([{ name: "Léo" }]);
++  });
++
++  it("retirar o consentimento apaga os dados de saúde e mantém a pessoa", async () => {
++    await run({ userId: ANA }, "select public.revoke_health_consent()");
++    const rows = await run(
++      { userId: ANA },
++      "select name, allergies, diet, goal, dislikes from public.household_members",
++    );
++    expect(rows).toEqual([
++      {
++        name: "Léo",
++        allergies: [],
++        diet: "sem_restricao",
++        goal: null,
++        dislikes: ["jiló"],
++      },
++    ]);
++    await expect(
++      run(
++        { userId: ANA },
++        "update public.household_members set diet = 'vegano'",
++      ),
++    ).rejects.toThrow(/consentimento/);
++  });
++
++  it("o consentimento de uma conta não vale para outra", async () => {
++    await consent(BIA);
++    await expect(
++      run(
++        { userId: ANA },
++        "update public.household_members set diet = 'vegano'",
++      ),
++    ).rejects.toThrow(/consentimento/);
++  });
++
++  it("limita a 12 pessoas por conta", async () => {
++    for (let i = 0; i < 11; i++) {
++      await run(
++        { userId: ANA },
++        "insert into public.household_members (name) values ($1)",
++        [`Pessoa ${i}`],
++      );
++    }
++    await expect(
++      run(
++        { userId: ANA },
++        "insert into public.household_members (name) values ('Treze')",
++      ),
++    ).rejects.toThrow(/Limite/);
++  });
++});
+diff --git a/tests/unit/familia.test.ts b/tests/unit/familia.test.ts
+new file mode 100644
+index 0000000..c81d43c
+--- /dev/null
++++ b/tests/unit/familia.test.ts
+@@ -0,0 +1,64 @@
++import { describe, expect, it } from "vitest";
++import {
++  ageFrom,
++  hasHealthData,
++  memberSchema,
++  parseList,
++} from "@/modules/familia/schemas";
++
++const ok = {
++  name: " Léo ",
++  relation: "filho",
++  birthYear: "2018",
++  diet: "sem_restricao",
++  allergies: [],
++  likes: "banana, abóbora,banana ,, ",
++  dislikes: "",
++  goal: "",
++};
++
++describe("pessoa da casa", () => {
++  it("limpa textos e transforma listas", () => {
++    expect(memberSchema.parse(ok)).toMatchObject({
++      name: "Léo",
++      birthYear: 2018,
++      likes: ["banana", "abóbora"],
++      dislikes: [],
++      goal: null,
++    });
++  });
++  it("ano de nascimento é opcional, mas tem de ser um ano de verdade", () => {
++    expect(memberSchema.parse({ ...ok, birthYear: "" }).birthYear).toBeNull();
++    expect(memberSchema.safeParse({ ...ok, birthYear: "18" }).success).toBe(
++      false,
++    );
++    expect(memberSchema.safeParse({ ...ok, birthYear: "2999" }).success).toBe(
++      false,
++    );
++  });
++  it("recusa dieta fora da lista e código de alergênico estranho", () => {
++    expect(memberSchema.safeParse({ ...ok, diet: "carnivora" }).success).toBe(
++      false,
++    );
++    expect(
++      memberSchema.safeParse({ ...ok, allergies: ["DROP TABLE"] }).success,
++    ).toBe(false);
++  });
++  it("sabe quando há dado de saúde", () => {
++    const base = memberSchema.parse(ok);
++    expect(hasHealthData(base)).toBe(false);
++    expect(hasHealthData({ ...base, allergies: ["leite"] })).toBe(true);
++    expect(hasHealthData({ ...base, diet: "vegano" })).toBe(true);
++    expect(hasHealthData({ ...base, goal: "menos açúcar" })).toBe(true);
++  });
++  it("corta listas longas e itens grandes", () => {
++    expect(
++      parseList(Array.from({ length: 30 }, (_, i) => `item ${i}`).join(",")),
++    ).toHaveLength(20);
++    expect(parseList("x".repeat(80))[0]).toHaveLength(40);
++  });
++  it("calcula a idade pelo ano", () => {
++    expect(ageFrom(2018, new Date("2026-11-16"))).toBe(8);
++    expect(ageFrom(null)).toBeNull();
++  });
++});

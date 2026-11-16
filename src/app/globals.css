@@ -312,3 +312,39 @@
 .logo-glow {
   box-shadow: 0 0 7px 0 rgb(254 210 22 / 0.5);
 }
+
+/* "Raio-X da sua casa" (D-044): faixa de leitura passando e ponto pulsando. */
+@keyframes fit-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.fit-scan {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #8fd14f,
+    #fed216,
+    transparent
+  );
+  animation: fit-scan 2.8s ease-in-out infinite;
+}
+@keyframes fit-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgb(143 209 79 / 0);
+  }
+}
+.fit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8fd14f;
+  box-shadow: 0 0 0 0 rgb(143 209 79 / 0.7);
+  animation: fit-pulse 1.8s ease-out infinite;
+}

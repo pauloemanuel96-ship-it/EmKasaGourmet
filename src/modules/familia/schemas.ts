@@ -76,3 +76,23 @@ export function ageFrom(
 ): number | null {
   return birthYear === null ? null : Math.max(0, now.getFullYear() - birthYear);
 }
+
+/** O pior caso entre as pessoas da casa, para o selo da vitrine. */
+export type FitSummary = {
+  verdict: "blocked" | "unknown" | "diet";
+  names: string[];
+};
+const WEIGHT = { blocked: 3, unknown: 2, diet: 1 } as const;
+
+export function summarizeFit(
+  issues: { memberName: string; verdict: keyof typeof WEIGHT }[],
+): FitSummary | null {
+  if (issues.length === 0) return null;
+  const worst = issues.reduce((a, b) =>
+    WEIGHT[b.verdict] > WEIGHT[a.verdict] ? b : a,
+  ).verdict;
+  return {
+    verdict: worst,
+    names: issues.filter((i) => i.verdict === worst).map((i) => i.memberName),
+  };
+}

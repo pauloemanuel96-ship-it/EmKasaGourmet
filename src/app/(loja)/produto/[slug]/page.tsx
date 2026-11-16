@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/loja/add-to-cart";
 import { AllergenBlock } from "@/components/loja/allergen-block";
 import { DemoPrice } from "@/components/loja/demo-price";
+import { HouseholdFitCard } from "@/components/loja/household-fit";
 import { DemoTag } from "@/components/loja/demo-tag";
 import { Photo } from "@/components/loja/photo";
 import { ProductImage } from "@/components/loja/product-image";
@@ -181,6 +183,9 @@ export default async function ProdutoPage({
             <AddToCart product={p} />
           )}
           <AllergenBlock product={p} />
+          <Suspense fallback={null}>
+            <HouseholdFitCard slug={p.slug} isDemo={p.isDemo} />
+          </Suspense>
           <dl className="grid gap-3 text-sm">
             {p.ingredients.length > 0 && (
               <div>
