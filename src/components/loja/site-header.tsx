@@ -30,6 +30,7 @@ export function SiteHeader() {
             width={36}
             height={36}
             priority
+            className="logo-glow rounded-full"
           />
           <span>
             emKasa <span className="text-leaf-700">Gourmet</span>

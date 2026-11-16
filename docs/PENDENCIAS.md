@@ -89,4 +89,5 @@ Cada item é um módulo. O de cima destrava os de baixo.
 - 🔴 **Abrir o cadastro no Supabase.** Hoje só a equipe entra, e criar conta está fechado de propósito. Em Authentication → Sign In / Providers, ligar "Allow new users to sign up" e a confirmação de e-mail.
 - 🔴 **Remetente de e-mail próprio.** O envio padrão do Supabase serve para teste e trava com poucos e-mails por hora. Para confirmar conta e recuperar senha de clientes de verdade, cadastrar um serviço de envio (SMTP) com o domínio da Emkasa.
 - 🟠 **Domínio próprio do site**, se houver, para os links dos e-mails não saírem com `vercel.app`.
-- 🟠 **Quais dados pedir no cadastro** além de nome, e-mail e WhatsApp (endereço já na criação ou só na primeira compra?).
+- ✅ **Endereço (definido pelo Paulo em 16/11):** entra no cadastro e é confirmado na hora da compra. A conta guarda vários endereços, cada um com um nome (casa, trabalho, casa do pai, da mãe, do filho), sempre pensando na família. A pessoa pode partir da localização do aparelho e ajustar os dados à mão.
+- 🟠 **Serviço de mapa para "usar minha localização".** Preencher pelo CEP é gratuito e entra de início. Transformar o GPS do aparelho em rua e número precisa de um serviço de mapas, em geral pago por uso (ex.: Google Maps): escolher qual e criar a chave.

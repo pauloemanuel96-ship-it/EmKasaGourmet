@@ -307,3 +307,10 @@
   opacity: 0.35;
   animation: lead-glow 3.2s ease-in-out infinite;
 }
+
+/* Brilho dourado em volta do logo (o mesmo do cartão de compartilhamento). */
+.logo-glow {
+  box-shadow:
+    0 0 0 1px rgb(254 210 22 / 0.5),
+    0 0 14px 2px rgb(254 210 22 / 0.55);
+}
