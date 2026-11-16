@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { signOutCustomer } from "@/modules/conta/actions";
 import { getCustomerAccount } from "@/modules/conta/queries";
+import { getHousehold } from "@/modules/familia/queries";
 import { AddressManager } from "./address-manager";
+import { FamilyManager } from "./family-manager";
 import { BTN_GHOST } from "./fields";
 import { ProfileForm } from "./profile-form";
 
@@ -38,6 +40,8 @@ export async function AccountPanel() {
     );
   }
 
+  const household = await getHousehold();
+
   return (
     <div className="mb-12 flex flex-col gap-10">
       <section aria-labelledby="conta-dados" className="flex flex-col gap-5">
@@ -59,6 +63,18 @@ export async function AccountPanel() {
           phone={account.phone}
           marketing={account.marketing_consent}
         />
+      </section>
+
+      <section aria-labelledby="conta-familia" className="flex flex-col gap-4">
+        <div>
+          <h2 id="conta-familia" className="text-3xl">
+            Quem mora com você
+          </h2>
+          <p className="text-ink-600">
+            Cada pessoa com o que gosta, o que evita e o que não pode comer.
+          </p>
+        </div>
+        <FamilyManager household={household} />
       </section>
 
       <section

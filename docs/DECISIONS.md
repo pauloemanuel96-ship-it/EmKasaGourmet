@@ -163,3 +163,10 @@ A loja passa a ter conta de cliente: criar conta com e-mail e senha, entrar, ped
 Segurança: cada pessoa lê e altera só a própria conta e os próprios endereços (RLS); owner e admin leem; operação e atendimento não; o e-mail da conta vem do login e a pessoa não consegue trocá-lo pela tabela. Abrir o cadastro não expõe nada novo do catálogo: as regras que liberam leitura a "qualquer logado" já eram públicas. Cliente logado que tentar abrir o painel cai na tela "sem acesso", como qualquer usuário sem papel. As mensagens de cadastro e de senha não revelam se um e-mail já tem conta. Painel: `/admin/clientes`.
 
 Depende de duas configurações no Supabase que só o Paulo faz: abrir o cadastro com confirmação de e-mail e cadastrar um remetente próprio. Sem a primeira, a tela mostra "O cadastro ainda não está aberto".
+
+## D-043 — Família da conta e dado de saúde só do dono · **Aceita (pedido do Paulo, 16/11/2026)**
+A conta passa a guardar as pessoas da casa (até 12): nome ou apelido, quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer (da lista oficial de alergênicos) e objetivo alimentar. Fica na Minha Casa, acima dos endereços.
+
+Dieta, alergia e objetivo são dado pessoal sensível (LGPD art. 11), e muitas vezes de criança. Regras, conferidas pelo banco: (1) só entram com autorização registrada (texto aceito e data na tabela `consents`), pedida no próprio formulário na primeira vez; (2) **só o dono da conta lê**: não existe regra de leitura para a equipe, nem para owner; (3) retirar a autorização apaga dieta, alergias e objetivo de todos na hora e mantém nomes e gostos; (4) nada disso vai para IA nem para marketing. As tabelas ficam no schema `public` com RLS só-do-dono, e não no schema `private` que o SECURITY_AND_PRIVACY previa: no `private` cada leitura precisaria de uma função com privilégio elevado, o que aumenta a superfície sem ganho, já que quem lê é sempre a própria pessoa logada.
+
+Guarda-se o ano de nascimento em vez da idade (a idade muda sozinha). Peso não é coletado: sem uso definido, seria dado de saúde guardado à toa.
