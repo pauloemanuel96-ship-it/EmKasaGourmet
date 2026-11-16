@@ -13,63 +13,65 @@ export const contentType = "image/png";
 export default async function OpengraphImage() {
   const logo = await readFile(join(process.cwd(), "public/icons/icon-512.png"));
   const src = `data:image/png;base64,${logo.toString("base64")}`;
+  // Tudo no centro: o WhatsApp às vezes mostra só um quadrado do meio da
+  // imagem, então logo e nome precisam caber nesse quadrado (630 x 630).
   return new ImageResponse(
     <div
       style={{
         width: "100%",
         height: "100%",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        gap: 52,
-        padding: "0 72px",
+        justifyContent: "center",
+        gap: 14,
         color: "#faf6ee",
         background:
-          "radial-gradient(900px 600px at 78% 40%, #2c4a37 0%, #16271b 55%, #0e1912 100%)",
+          "radial-gradient(700px 520px at 50% 42%, #2c4a37 0%, #16271b 55%, #0e1912 100%)",
       }}
     >
       <div
         style={{
           display: "flex",
-          width: 300,
-          height: 300,
-          borderRadius: 300,
-          border: "6px solid #fed216",
-          boxShadow: "0 0 80px rgba(254,210,22,.35)",
+          width: 268,
+          height: 268,
+          borderRadius: 268,
+          border: "4px solid #fed216",
+          boxShadow: "0 0 70px rgba(254,210,22,.4)",
+          marginBottom: 14,
         }}
       >
         <img
           src={src}
           alt=""
-          width={288}
-          height={288}
-          style={{ borderRadius: 288 }}
+          width={260}
+          height={260}
+          style={{ borderRadius: 260 }}
         />
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        <div
-          style={{
-            display: "flex",
-            fontSize: 30,
-            letterSpacing: 6,
-            color: "#fed216",
-            textTransform: "uppercase",
-          }}
-        >
-          Horta · Cozinha · Casa
-        </div>
-        <div
-          style={{
-            display: "flex",
-            fontSize: 76,
-            fontWeight: 700,
-            lineHeight: 1,
-          }}
-        >
-          emKasa Gourmet
-        </div>
-        <div style={{ display: "flex", fontSize: 38, color: "#cfe3a6" }}>
-          Alimentar é uma forma de cuidar.
-        </div>
+      <div
+        style={{
+          display: "flex",
+          fontSize: 22,
+          letterSpacing: 5,
+          color: "#fed216",
+          textTransform: "uppercase",
+        }}
+      >
+        Horta · Cozinha · Casa
+      </div>
+      <div
+        style={{
+          display: "flex",
+          fontSize: 68,
+          fontWeight: 700,
+          lineHeight: 1,
+        }}
+      >
+        emKasa Gourmet
+      </div>
+      <div style={{ display: "flex", fontSize: 31, color: "#cfe3a6" }}>
+        Alimentar é uma forma de cuidar.
       </div>
     </div>,
     size,
