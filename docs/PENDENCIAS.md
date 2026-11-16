@@ -64,3 +64,19 @@
 - 🔴 WhatsApp oficial: sem o número, o botão de encomenda aparece como "Encomendas abrem em breve".
 - 🟠 Prazo final de encomenda e formas de retirada ou entrega do Natal.
 - ⚪ Ligar e desligar a chamada da home pelo painel (hoje é uma linha em `src/modules/campanhas/home-campaign.ts`).
+
+## Frentes pedidas em 16/11/2026 (ordem sugerida de construção)
+Cada item é um módulo. O de cima destrava os de baixo.
+1. 🔴 **Conta do cliente** (login por e-mail, dados e endereço). Base de tudo: sem conta não há carrinho salvo, histórico nem desconto por pessoa.
+2. 🔴 **Carrinho e pedido de verdade no banco.** Hoje carrinho, checkout e pedidos são demonstração guardada no navegador. Com isso vêm carrinho abandonado e item que entrou e saiu do carrinho.
+3. 🔴 **Pagamento real** (conta Mercado Pago da empresa; hoje é teste).
+4. 🟠 **Cupons e descontos.** O aviso de ofertas promete desconto, mas ainda não existe cupom no sistema. Definir os descontos da Black Friday (percentual, produtos, validade).
+5. 🟠 **Aviso de cookies com consentimento.** Obrigatório antes de registrar visitas e de ligar Google Ads e Meta Ads.
+6. 🟠 **Registro de visitas e funil** (quem acessou, quando, de onde veio, o que viu, onde desistiu) e **painel master** só para o owner.
+7. 🟠 **Painéis por papel:** owner com tudo (tráfego, funil, origem, contatos, auditoria); admin com financeiro, pedidos e ajustes. Os papéis já existem no banco; falta separar as telas.
+8. 🟠 **Integração Google Ads e Meta Ads** (conversões pelo servidor). Precisa das contas de anúncio.
+9. 🟠 **SEO:** títulos e descrições por página, dados estruturados de produto e empresa, sitemap, imagem de compartilhamento. Sem texto escondido nem lista de palavras-chave: o Google trata como spam e pode rebaixar o site.
+10. 🟠 **Minha Casa no banco:** foto de perfil ou da família, cada familiar com restrições, o que gosta e não gosta, idade e objetivo. Hoje é protótipo no navegador. Dado de saúde e de criança: consentimento específico e opção de apagar. Decidir se peso entra mesmo (coletar só o que for usado).
+11. 🟠 **Assistente do cliente** (botão flutuante) com IA: ajuda na compra e pode propor o cadastro de um familiar, que a pessoa confirma. Precisa da chave da API e de limite de custo por mês.
+12. ⚪ **Plantas, mudas e flores sob encomenda.** Entra como uma seção da loja com pedido por orçamento, igual a Encomendas. Definir nome (evitar "Mundo Verde", que é marca de uma rede de lojas), produtos, fotos e preços.
+13. ⚪ Envio das ofertas aos contatos (e-mail e WhatsApp): escolher a ferramenta de disparo. Hoje o cadastro só guarda o contato.

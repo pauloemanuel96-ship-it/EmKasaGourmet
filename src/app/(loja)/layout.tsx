@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BottomNav } from "@/components/loja/bottom-nav";
+import { LeadPopup } from "@/components/loja/lead-popup";
 import { DemoBanner } from "@/components/loja/demo-banner";
 import { SiteFooter } from "@/components/loja/site-footer";
 import { SiteHeader } from "@/components/loja/site-header";
@@ -23,6 +24,9 @@ export default function LojaLayout({ children }: LayoutProps<"/">) {
       <div aria-hidden="true" className="pb-safe h-16 md:hidden" />
       <Suspense fallback={null}>
         <BottomNav />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LeadPopup />
       </Suspense>
     </>
   );
