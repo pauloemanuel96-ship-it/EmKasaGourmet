@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { HomeStage } from "@/components/loja/home-stage/home-stage";
+import { NatalBanner } from "@/components/loja/natal/natal-banner";
 import { Photo } from "@/components/loja/photo";
 import { ProductArt } from "@/components/loja/product-art";
 import { ProductTile } from "@/components/loja/product-tile";
 import { Section } from "@/components/loja/section";
 import { BOX_PLANS, COURSES, RECIPES, TESTIMONIALS } from "@/demo/data";
 import { formatCents } from "@/lib/money";
+import { HOME_CAMPAIGN } from "@/modules/campanhas/home-campaign";
 import { SITE_PHOTOS, STATIC_COVERS } from "@/modules/catalogo/static-photos";
 import { getStoreCatalog } from "@/modules/catalogo/store";
 
@@ -53,6 +55,8 @@ export default async function Home() {
         saladPhotoAlt={SITE_PHOTOS.saladaNoPote2}
         farofaPhoto={STATIC_COVERS["farofa-nutritiva-de-soja"]}
       />
+
+      {HOME_CAMPAIGN === "natal" && <NatalBanner />}
 
       {/* Proposta de valor */}
       <section

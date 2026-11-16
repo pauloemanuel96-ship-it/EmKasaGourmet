@@ -58,3 +58,9 @@
 - 🟠 Ingredientes da salada no pote: a ilustração usa molho, grão-de-bico, cenoura ralada, repolho roxo, pepino, brócolis, alface e tomate-cereja. Confirmar a lista real (ajuste em `src/components/loja/home-stage/ingredients.ts`).
 - 🟠 "Monte do seu jeito": hoje é só a ideia na vitrine. Definir se a salada personalizada vira produto de verdade (opções, preço, como pedir).
 - ⚪ Rótulo da Farofa: há duas versões nas fotos (faixa laranja e faixa vermelha) e o pote 3D mostra uma de cada lado. Informar qual é a atual.
+
+## Natal (15/11/2026)
+- 🔴 Pratos das ceias e avulsos (entradas, principais, sobremesas): cadastrar no painel em Encomendas e marcar a campanha "Natal". Sem isso a página mostra "Cardápio chegando".
+- 🔴 WhatsApp oficial: sem o número, o botão de encomenda aparece como "Encomendas abrem em breve".
+- 🟠 Prazo final de encomenda e formas de retirada ou entrega do Natal.
+- ⚪ Ligar e desligar a chamada da home pelo painel (hoje é uma linha em `src/modules/campanhas/home-campaign.ts`).
