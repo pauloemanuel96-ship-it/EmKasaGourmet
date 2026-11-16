@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { AccountPanel } from "@/components/loja/conta/account-panel";
 import { MyHome } from "@/components/loja/my-home";
 
 export const metadata: Metadata = {
@@ -13,6 +15,13 @@ export default function MinhaCasaPage() {
         Minha Casa Emkasa
       </p>
       <h1 className="mb-8 text-4xl">Sua casa, sua assinatura, seus pedidos</h1>
+      <Suspense
+        fallback={
+          <div className="bg-sand-200/60 mb-10 h-48 rounded-(--radius-media)" />
+        }
+      >
+        <AccountPanel />
+      </Suspense>
       <MyHome />
     </main>
   );

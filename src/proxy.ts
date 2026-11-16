@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { publicEnv } from "@/lib/env";
 
 /**
- * Roda antes das rotas /admin e /auth:
+ * Roda antes das rotas /admin, /auth e da área do cliente:
  * 1) renova a sessão do Supabase (cookies) a cada requisição;
  * 2) checagem otimista: sem sessão em /admin → tela de login.
  * A checagem definitiva de papel acontece no servidor (modules/auth) e no RLS.
@@ -51,5 +51,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/auth/:path*"],
+  // /minha-casa e /entrar entram só para renovar a sessão do cliente.
+  matcher: ["/admin/:path*", "/auth/:path*", "/minha-casa/:path*", "/entrar"],
 };

@@ -67,7 +67,7 @@
 
 ## Frentes pedidas em 16/11/2026 (ordem sugerida de construção)
 Cada item é um módulo. O de cima destrava os de baixo.
-1. 🔴 **Conta do cliente** (login por e-mail, dados e endereço). Base de tudo: sem conta não há carrinho salvo, histórico nem desconto por pessoa.
+1. ✅ **Conta do cliente (construída em 16/11, D-042):** criar conta, entrar, senha nova, dados e endereços da família. Para funcionar em produção falta o Paulo abrir o cadastro e configurar o remetente de e-mail no Supabase (ver seção abaixo). Ainda não entrou: "usar minha localização", apagar a própria conta pelo site e a confirmação do endereço na compra (vem com o carrinho de verdade).
 2. 🔴 **Carrinho e pedido de verdade no banco.** Hoje carrinho, checkout e pedidos são demonstração guardada no navegador. Com isso vêm carrinho abandonado e item que entrou e saiu do carrinho.
 3. 🔴 **Pagamento real** (conta Mercado Pago da empresa; hoje é teste).
 4. 🟠 **Cupons e descontos.** O aviso de ofertas promete desconto, mas ainda não existe cupom no sistema. Definir os descontos da Black Friday (percentual, produtos, validade).
