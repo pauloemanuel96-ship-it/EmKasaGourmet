@@ -35,9 +35,8 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     title: "Emkasa Gourmet",
     description: "Alimentar é uma forma de cuidar.",
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512 }],
   },
-  twitter: { card: "summary" },
+  twitter: { card: "summary_large_image" },
   appleWebApp: {
     capable: true,
     title: "Emkasa",

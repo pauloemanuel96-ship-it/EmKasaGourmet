@@ -80,3 +80,13 @@ Cada item é um módulo. O de cima destrava os de baixo.
 11. 🟠 **Assistente do cliente** (botão flutuante) com IA: ajuda na compra e pode propor o cadastro de um familiar, que a pessoa confirma. Precisa da chave da API e de limite de custo por mês.
 12. ⚪ **Plantas, mudas e flores sob encomenda.** Entra como uma seção da loja com pedido por orçamento, igual a Encomendas. Definir nome (evitar "Mundo Verde", que é marca de uma rede de lojas), produtos, fotos e preços.
 13. ⚪ Envio das ofertas aos contatos (e-mail e WhatsApp): escolher a ferramenta de disparo. Hoje o cadastro só guarda o contato.
+
+## Conferências que o Paulo vai fazer depois (16/11/2026)
+- ⚪ Abrir `emkasa-gourmet.vercel.app/sitemap.xml` e ver se os endereços aparecem com o domínio do site, e não com "localhost".
+- ⚪ Testar o aviso de ofertas em aba anônima: cadastrar um e-mail de teste e ver se ele aparece em Contatos no painel.
+
+## Conta do cliente: o que só o Paulo pode ligar antes (16/11/2026)
+- 🔴 **Abrir o cadastro no Supabase.** Hoje só a equipe entra, e criar conta está fechado de propósito. Em Authentication → Sign In / Providers, ligar "Allow new users to sign up" e a confirmação de e-mail.
+- 🔴 **Remetente de e-mail próprio.** O envio padrão do Supabase serve para teste e trava com poucos e-mails por hora. Para confirmar conta e recuperar senha de clientes de verdade, cadastrar um serviço de envio (SMTP) com o domínio da Emkasa.
+- 🟠 **Domínio próprio do site**, se houver, para os links dos e-mails não saírem com `vercel.app`.
+- 🟠 **Quais dados pedir no cadastro** além de nome, e-mail e WhatsApp (endereço já na criação ou só na primeira compra?).

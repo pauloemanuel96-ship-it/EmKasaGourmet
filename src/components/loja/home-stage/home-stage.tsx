@@ -30,8 +30,8 @@ function canRun3D() {
 
 /**
  * Liga uma cena 3D a um canvas (D-038). A cena só é baixada e criada quando a
- * seção chega perto da tela, começa a se mover quando aparece e para quando
- * sai. Sem WebGL, com economia de dados ou em aparelho fraco, nada é criado e
+ * seção chega perto da tela e para quando sai. A salada e a Farofa se montam
+ * conforme a pessoa rola a página; a caixa da abertura enche sozinha. Sem WebGL, com economia de dados ou em aparelho fraco, nada é criado e
  * a foto de reserva continua no lugar.
  */
 function useStage(kind: StageKind) {
@@ -58,7 +58,29 @@ function useStage(kind: StageKind) {
       handle.setActive(visible);
       if (seen) handle.start();
     };
-    const onResize = () => handle?.resize();
+    // Progresso pelo scroll, sem prender a tela: 0 quando a cena desponta
+    // embaixo, 1 quando chega ao meio. Na abertura, é o quanto já se rolou.
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      if (!handle) return;
+      const vh = window.innerHeight;
+      const r = box.getBoundingClientRect();
+      if (kind === "box") {
+        handle.setProgress(window.scrollY / vh);
+        return;
+      }
+      const from = vh * 0.92;
+      const to = Math.max(vh * 0.5 - r.height / 2, 80);
+      handle.setProgress((from - r.top) / (from - to));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    const onResize = () => {
+      handle?.resize();
+      onScroll();
+    };
     const load = () => {
       if (loading) return;
       loading = true;
@@ -75,7 +97,9 @@ function useStage(kind: StageKind) {
           handleRef.current = handle;
           setLive(true);
           window.addEventListener("resize", onResize);
+          window.addEventListener("scroll", onScroll, { passive: true });
           sync();
+          measure();
         })
         .catch(() => {
           // Falhou ao criar a cena: fica a foto.
@@ -103,6 +127,8 @@ function useStage(kind: StageKind) {
       near.disconnect();
       onScreen.disconnect();
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
       handle?.dispose();
       handleRef.current = null;
     };
@@ -219,7 +245,8 @@ export function SaladStage({ photo }: { photo: StagePhoto }) {
             Monte do seu jeito.
           </h2>
           <p className="text-ink-600 max-w-md sm:text-lg">
-            {live && "Toque nos ingredientes para tirar ou colocar. "}
+            {live &&
+              "Role para montar e toque nos ingredientes para tirar ou colocar. "}
             Aqui a comida é pensada para você.
           </p>
         </div>

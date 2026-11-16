@@ -15,6 +15,8 @@ export type StageKind = "box" | "salad" | "farofa";
 export type StageHandle = {
   /** Começa a animação (a seção entrou na tela). */
   start(): void;
+  /** Quanto a seção já andou na tela (0 a 1): o scroll conduz a montagem. */
+  setProgress(p: number): void;
   setActive(active: boolean): void;
   toggle(id: string): void;
   resize(): void;
@@ -1499,6 +1501,8 @@ export function createStage(
   /* ===== estado ===== */
   let P = 0;
   let startedAt = -1;
+  let prog = 0;
+  let progS = 0;
   let active = true;
   let disposed = false;
   let needsRender = true;
@@ -1643,12 +1647,15 @@ export function createStage(
       dragV *= 0.93;
     }
 
-    // Cada cena anda sozinha depois que entra na tela (antes era o scroll).
+    // O scroll conduz a salada e a Farofa (suavizado para não dar tranco);
+    // a caixa do BOX enche sozinha, porque já abre a página na tela.
     const el = startedAt < 0 ? -1 : (now - startedAt) / 1000;
+    progS += (prog - progS) * Math.min(1, dt * 7);
+    if (Math.abs(prog - progS) < 0.0005) progS = prog;
     if (opts.kind === "salad") {
-      P = el < 0 ? 0 : STAGE_BEATS.assembleStart + Math.min(1, el / 4.4) * 0.4;
+      P = STAGE_BEATS.assembleStart + progS * 0.4;
     } else if (opts.kind === "farofa") {
-      P = el < 0 ? 0.74 : 0.74 + Math.min(1, Math.max(0, el - 0.6) / 2.2) * 0.2;
+      P = 0.74 + progS * 0.2;
     }
 
     /* salada */
@@ -1730,7 +1737,11 @@ export function createStage(
     if (opts.kind === "box") {
       crate.position.set(baseX, baseY, 0);
       crate.scale.setScalar(baseS * 1.08);
-      crate.rotation.set(0.5 + py * 0.04, -0.45 + idle * 0.1 + drag, 0);
+      crate.rotation.set(
+        0.5 + py * 0.04 - progS * 0.18,
+        -0.45 + idle * 0.1 + drag + progS * 1.1,
+        0,
+      );
       for (const d of drops) {
         const t = el < 0 ? 0 : clamp((el - d.delay) / 0.75);
         if (t < 1) animating = true;
@@ -1765,7 +1776,11 @@ export function createStage(
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
 
-    needsRender = animating || !opts.reducedMotion || Math.abs(dragV) > 0.0005;
+    needsRender =
+      prog !== progS ||
+      animating ||
+      !opts.reducedMotion ||
+      Math.abs(dragV) > 0.0005;
     if (active && needsRender) raf = requestAnimationFrame(frame);
   }
   function kick() {
@@ -1780,6 +1795,11 @@ export function createStage(
   kick();
 
   return {
+    setProgress(p) {
+      prog = clamp(p);
+      needsRender = true;
+      kick();
+    },
     start() {
       if (startedAt < 0) startedAt = performance.now();
       needsRender = true;

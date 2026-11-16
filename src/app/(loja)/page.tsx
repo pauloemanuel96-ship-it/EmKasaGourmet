@@ -92,8 +92,8 @@ export default async function Home() {
         </ol>
       </section>
 
-      {/* Um produto da casa em 3D abre as vitrines */}
-      <FarofaStage photo={STATIC_COVERS["farofa-nutritiva-de-soja"]} />
+      {/* A salada que a pessoa monta abre as vitrines */}
+      <SaladStage photo={SITE_PHOTOS.saladaNoPote2} />
 
       {showcases.map(({ section, copy, products }) => (
         <Section
@@ -115,8 +115,8 @@ export default async function Home() {
         </Section>
       ))}
 
-      {/* Depois de ver os produtos: a salada que a pessoa monta */}
-      <SaladStage photo={SITE_PHOTOS.saladaNoPote2} />
+      {/* Depois das vitrines: um produto da casa em 3D */}
+      <FarofaStage photo={STATIC_COVERS["farofa-nutritiva-de-soja"]} />
 
       {orders && (
         <section
