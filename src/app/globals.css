@@ -310,7 +310,5 @@
 
 /* Brilho dourado em volta do logo (o mesmo do cartão de compartilhamento). */
 .logo-glow {
-  box-shadow:
-    0 0 0 1px rgb(254 210 22 / 0.5),
-    0 0 14px 2px rgb(254 210 22 / 0.55);
+  box-shadow: 0 0 7px 0 rgb(254 210 22 / 0.5);
 }

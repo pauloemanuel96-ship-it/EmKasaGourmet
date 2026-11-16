@@ -182,51 +182,8 @@ const eyebrowDark =
   "text-xs font-semibold tracking-widest text-[#fed216] uppercase";
 const primary =
   "inline-flex min-h-11 items-center rounded-full bg-[#f9630e] px-6 font-semibold text-[#1c1206] active:scale-[0.97]";
-const ghost =
-  "inline-flex min-h-11 items-center rounded-full border border-[#faf6ee]/40 px-6 font-medium text-[#faf6ee] active:scale-[0.97]";
 
-/** 1. Abertura: a caixa do BOX se enche de frutas e verduras. */
-export function HeroStage({ photo }: { photo: StagePhoto }) {
-  const { boxRef, canvasRef, live } = useStage("box");
-  return (
-    <section
-      aria-label="Apresentação"
-      className="relative overflow-hidden text-[#faf6ee]"
-      style={{ background: DARK }}
-    >
-      <div className="mx-auto grid max-w-6xl items-center gap-2 px-4 pt-10 sm:px-6 md:grid-cols-[1fr_1.05fr] md:gap-6 md:py-10">
-        <div className="relative z-10 flex flex-col gap-4">
-          <p className={eyebrowDark}>Horta · Cozinha · Casa</p>
-          <h1 className="text-4xl text-[#faf6ee] sm:text-6xl">
-            Alimentar é uma forma de <em className="text-[#cfe3a6]">cuidar.</em>
-          </h1>
-          <p className="max-w-md text-base text-[#faf6ee]/80 sm:text-lg">
-            Da nossa horta e da cozinha da Chef Angela para a sua mesa, numa
-            caixa montada para a sua casa.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/box" className={primary}>
-              Montar meu BOX
-            </Link>
-            <Link href="/loja" className={ghost}>
-              Ver a loja
-            </Link>
-          </div>
-        </div>
-        <StageCanvas
-          boxRef={boxRef}
-          canvasRef={canvasRef}
-          live={live}
-          photo={photo}
-          priority
-          className="h-[46svh] min-h-[300px] md:h-[min(70svh,560px)]"
-        />
-      </div>
-    </section>
-  );
-}
-
-/** 2. Salada no pote: a pessoa tira e coloca os ingredientes. */
+/** Salada no pote: a pessoa tira e coloca os ingredientes. */
 export function SaladStage({ photo }: { photo: StagePhoto }) {
   const { boxRef, canvasRef, live, inJar, toggle } = useStage("salad");
   return (
@@ -305,7 +262,7 @@ export function SaladStage({ photo }: { photo: StagePhoto }) {
   );
 }
 
-/** 3. Farofa: o pote transparente abre e mostra a farofa. */
+/** Farofa: o pote transparente abre e mostra a farofa. */
 export function FarofaStage({ photo }: { photo: StagePhoto }) {
   const { boxRef, canvasRef, live } = useStage("farofa");
   return (

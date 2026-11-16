@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { HeroVideo } from "@/components/loja/hero-video";
 import {
   FarofaStage,
-  HeroStage,
   SaladStage,
 } from "@/components/loja/home-stage/home-stage";
 import { NatalBanner } from "@/components/loja/natal/natal-banner";
@@ -58,8 +58,8 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(organizationLd()) }}
       />
-      {/* Abertura: a caixa do BOX em 3D, com foto de reserva (D-038) */}
-      <HeroStage photo={SITE_PHOTOS.saladaNoPote1} />
+      {/* Abertura: vídeo real da horta ao prato (D-041) */}
+      <HeroVideo />
 
       {HOME_CAMPAIGN === "natal" && <NatalBanner />}
 
