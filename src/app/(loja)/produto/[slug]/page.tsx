@@ -12,6 +12,7 @@ import { formatCents } from "@/lib/money";
 import { getStoreCatalog, getStoreProduct } from "@/modules/catalogo/store";
 import { whatsappLink } from "@/modules/catalogo/store-types";
 import { STORAGE_LABEL } from "@/modules/catalogo/types";
+import { jsonLd, productLd } from "@/modules/seo/json-ld";
 
 export async function generateStaticParams() {
   const catalog = await getStoreCatalog();
@@ -23,9 +24,19 @@ export async function generateMetadata({
 }: PageProps<"/produto/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const { product } = await getStoreProduct(slug);
+  if (!product) return { title: "Produto" };
+  const description = product.short ?? product.description ?? undefined;
   return {
-    title: product?.name ?? "Produto",
-    description: product?.short ?? undefined,
+    title: product.name,
+    description,
+    alternates: { canonical: `/produto/${product.slug}` },
+    // Item de demonstração não é produto à venda: fica fora da busca.
+    robots: product.isDemo ? { index: false } : undefined,
+    openGraph: {
+      title: product.name,
+      description,
+      images: product.cover ? [{ url: product.cover.url }] : undefined,
+    },
   };
 }
 
@@ -46,8 +57,16 @@ export default async function ProdutoPage({
       : `Olá! Quero um orçamento de "${p.name}" pela loja da Emkasa.`,
   );
 
+  const ld = productLd(p);
+
   return (
     <main className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
+      {ld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(ld) }}
+        />
+      )}
       <nav aria-label="Trilha" className="text-ink-600 mb-6 text-sm">
         <Link
           href={quote ? "/encomendas" : "/loja"}

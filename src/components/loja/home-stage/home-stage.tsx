@@ -1,29 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Photo } from "@/components/loja/photo";
-import { STAGE_BEATS, STAGE_INGREDIENTS } from "./ingredients";
-import type { StageHandle } from "./scene";
+import { STAGE_INGREDIENTS } from "./ingredients";
+import type { StageHandle, StageKind } from "./scene";
 
 type StagePhoto = { url: string; alt: string };
-
-/** [início, fim] de cada painel de texto no scroll do palco (0 a 1). */
-const PANEL_RANGES: [number, number][] = [
-  [-1, STAGE_BEATS.heroEnd],
-  [STAGE_BEATS.saladStart, STAGE_BEATS.saladEnd],
-  [STAGE_BEATS.farofaStart, 2],
-];
 
 const ASSETS = {
   labelA: "/fotos/3d/rotulo-farofa-a.webp",
   labelB: "/fotos/3d/rotulo-farofa-b.webp",
   farofa: "/fotos/3d/farofa-textura.webp",
-};
-
-const smooth = (x: number) => {
-  const t = Math.min(1, Math.max(0, x));
-  return t * t * (3 - 2 * t);
 };
 
 function canRun3D() {
@@ -34,31 +22,21 @@ function canRun3D() {
     };
     if (nav.connection?.saveData) return false;
     if (nav.deviceMemory !== undefined && nav.deviceMemory < 3) return false;
-    const c = document.createElement("canvas");
-    return Boolean(c.getContext("webgl2"));
+    return Boolean(document.createElement("canvas").getContext("webgl2"));
   } catch {
     return false;
   }
 }
 
 /**
- * Abertura da home (D-034). Sem JavaScript, sem WebGL ou em aparelho fraco,
- * é uma seção comum com texto e fotos reais. Quando o 3D carrega, vira um palco
- * fixo em que o scroll monta a salada e depois mostra o pote da Farofa.
+ * Liga uma cena 3D a um canvas (D-038). A cena só é baixada e criada quando a
+ * seção chega perto da tela, começa a se mover quando aparece e para quando
+ * sai. Sem WebGL, com economia de dados ou em aparelho fraco, nada é criado e
+ * a foto de reserva continua no lugar.
  */
-export function HomeStage({
-  saladPhoto,
-  saladPhotoAlt,
-  farofaPhoto,
-}: {
-  saladPhoto: StagePhoto;
-  /** Segunda foto da salada, usada só na versão sem 3D. */
-  saladPhotoAlt: StagePhoto;
-  farofaPhoto: StagePhoto;
-}) {
-  const stageRef = useRef<HTMLElement>(null);
+function useStage(kind: StageKind) {
+  const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const handleRef = useRef<StageHandle | null>(null);
   const [live, setLive] = useState(false);
   const [inJar, setInJar] = useState<boolean[]>(() =>
@@ -66,236 +44,277 @@ export function HomeStage({
   );
 
   useEffect(() => {
-    const stage = stageRef.current;
+    const box = boxRef.current;
     const canvas = canvasRef.current;
-    if (!stage || !canvas || !canRun3D()) return;
-    // Se a pessoa já rolou a página, trocar o layout agora faria o conteúdo pular.
-    if (window.scrollY > stage.offsetTop + 240) return;
-
+    if (!box || !canvas || !canRun3D()) return;
     let cancelled = false;
+    let loading = false;
     let handle: StageHandle | null = null;
-    let frame = 0;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    let visible = false;
+    let seen = false;
 
-    const update = () => {
-      frame = 0;
+    const sync = () => {
       if (!handle) return;
-      const rect = stage.getBoundingClientRect();
-      const span = rect.height - window.innerHeight;
-      const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0;
-      handle.setProgress(p);
-      panelRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const [a, b] = PANEL_RANGES[i];
-        const o = Math.min(smooth((p - a) / 0.035), smooth((b - p) / 0.035));
-        el.style.opacity = o.toFixed(3);
-        el.style.visibility = o > 0.01 ? "visible" : "hidden";
-      });
+      handle.setActive(visible);
+      if (seen) handle.start();
     };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    const onResize = () => {
-      handle?.resize();
-      onScroll();
-    };
-    const visibility = new IntersectionObserver(([entry]) => {
-      handle?.setActive(entry.isIntersecting);
-    });
-
-    import("./scene")
-      .then(({ createStage }) => {
-        if (cancelled) return;
-        stage.dataset.mode = "live";
-        handle = createStage(canvas, {
-          assets: ASSETS,
-          reducedMotion,
-          onState: (state) => setInJar(state),
+    const onResize = () => handle?.resize();
+    const load = () => {
+      if (loading) return;
+      loading = true;
+      import("./scene")
+        .then(({ createStage }) => {
+          if (cancelled) return;
+          handle = createStage(canvas, {
+            kind,
+            assets: ASSETS,
+            reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)")
+              .matches,
+            onState: (state) => setInJar(state),
+          });
+          handleRef.current = handle;
+          setLive(true);
+          window.addEventListener("resize", onResize);
+          sync();
+        })
+        .catch(() => {
+          // Falhou ao criar a cena: fica a foto.
         });
-        handleRef.current = handle;
-        setLive(true);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        window.addEventListener("resize", onResize);
-        visibility.observe(stage);
-        update();
-      })
-      .catch(() => {
-        // Falhou ao criar a cena: fica a versão com fotos.
-        delete stage.dataset.mode;
-      });
-
+    };
+    // Perto da tela: baixa e cria. Na tela: anima.
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) load();
+      },
+      { rootMargin: "500px 0px" },
+    );
+    const onScreen = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        if (entry.intersectionRatio >= 0.35) seen = true;
+        sync();
+      },
+      { threshold: [0, 0.35] },
+    );
+    near.observe(box);
+    onScreen.observe(box);
     return () => {
       cancelled = true;
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
+      near.disconnect();
+      onScreen.disconnect();
       window.removeEventListener("resize", onResize);
-      visibility.disconnect();
       handle?.dispose();
       handleRef.current = null;
-      delete stage.dataset.mode;
     };
-  }, []);
+  }, [kind]);
 
-  const panel =
-    "mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 group-data-[mode=live]/stage:pointer-events-none group-data-[mode=live]/stage:absolute group-data-[mode=live]/stage:inset-0 group-data-[mode=live]/stage:flex group-data-[mode=live]/stage:max-w-none group-data-[mode=live]/stage:items-start group-data-[mode=live]/stage:py-0 group-data-[mode=live]/stage:pt-24 md:group-data-[mode=live]/stage:items-center md:group-data-[mode=live]/stage:pt-0";
-  const inner =
-    "flex flex-col gap-4 group-data-[mode=live]/stage:pointer-events-auto group-data-[mode=live]/stage:mx-auto group-data-[mode=live]/stage:w-full group-data-[mode=live]/stage:max-w-6xl md:group-data-[mode=live]/stage:pr-[52%]";
-  const eyebrow =
-    "text-xs font-semibold tracking-widest text-[#fed216] uppercase";
-  const lead = "max-w-md text-base text-[#faf6ee]/80 sm:text-lg";
-  const primary =
-    "inline-flex min-h-11 items-center rounded-full bg-[#f9630e] px-6 font-semibold text-[#1c1206] active:scale-[0.97]";
-  const ghost =
-    "inline-flex min-h-11 items-center rounded-full border border-[#faf6ee]/40 px-6 font-medium text-[#faf6ee] active:scale-[0.97]";
-  const fallbackPhoto = "mt-4 max-w-xs group-data-[mode=live]/stage:hidden";
+  const toggle = useCallback((id: string) => handleRef.current?.toggle(id), []);
+  return { boxRef, canvasRef, live, inJar, toggle };
+}
 
+/** Área da cena: a foto fica de reserva e some quando o 3D entra. */
+function StageCanvas({
+  boxRef,
+  canvasRef,
+  live,
+  photo,
+  priority = false,
+  className = "",
+}: {
+  boxRef: React.RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  live: boolean;
+  photo: StagePhoto;
+  priority?: boolean;
+  className?: string;
+}) {
+  return (
+    <div ref={boxRef} className={`relative ${className}`}>
+      <div
+        className={`absolute inset-0 grid place-items-center transition-opacity duration-500 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
+      >
+        <Photo
+          src={photo.url}
+          alt={live ? "" : photo.alt}
+          priority={priority}
+          sizes="(min-width: 768px) 420px, 80vw"
+          className="w-[min(78%,340px)]"
+        />
+      </div>
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        className={`absolute inset-0 h-full w-full cursor-grab touch-pan-y transition-opacity duration-700 active:cursor-grabbing ${live ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
+}
+
+const DARK =
+  "radial-gradient(110% 80% at 70% 60%, #2c4a37 0%, #16271b 48%, #0e1912 100%)";
+const eyebrowDark =
+  "text-xs font-semibold tracking-widest text-[#fed216] uppercase";
+const primary =
+  "inline-flex min-h-11 items-center rounded-full bg-[#f9630e] px-6 font-semibold text-[#1c1206] active:scale-[0.97]";
+const ghost =
+  "inline-flex min-h-11 items-center rounded-full border border-[#faf6ee]/40 px-6 font-medium text-[#faf6ee] active:scale-[0.97]";
+
+/** 1. Abertura: a caixa do BOX se enche de frutas e verduras. */
+export function HeroStage({ photo }: { photo: StagePhoto }) {
+  const { boxRef, canvasRef, live } = useStage("box");
   return (
     <section
-      ref={stageRef}
       aria-label="Apresentação"
-      className="group/stage relative bg-[#0e1912] text-[#faf6ee] data-[mode=live]:h-[520svh]"
+      className="relative overflow-hidden text-[#faf6ee]"
+      style={{ background: DARK }}
     >
-      <div className="group-data-[mode=live]/stage:sticky group-data-[mode=live]/stage:top-0 group-data-[mode=live]/stage:h-svh group-data-[mode=live]/stage:overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          className="absolute inset-0 hidden h-full w-full cursor-grab touch-pan-y group-data-[mode=live]/stage:block active:cursor-grabbing"
+      <div className="mx-auto grid max-w-6xl items-center gap-2 px-4 pt-10 sm:px-6 md:grid-cols-[1fr_1.05fr] md:gap-6 md:py-10">
+        <div className="relative z-10 flex flex-col gap-4">
+          <p className={eyebrowDark}>Horta · Cozinha · Casa</p>
+          <h1 className="text-4xl text-[#faf6ee] sm:text-6xl">
+            Alimentar é uma forma de <em className="text-[#cfe3a6]">cuidar.</em>
+          </h1>
+          <p className="max-w-md text-base text-[#faf6ee]/80 sm:text-lg">
+            Da nossa horta e da cozinha da Chef Angela para a sua mesa, numa
+            caixa montada para a sua casa.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/box" className={primary}>
+              Montar meu BOX
+            </Link>
+            <Link href="/loja" className={ghost}>
+              Ver a loja
+            </Link>
+          </div>
+        </div>
+        <StageCanvas
+          boxRef={boxRef}
+          canvasRef={canvasRef}
+          live={live}
+          photo={photo}
+          priority
+          className="h-[46svh] min-h-[300px] md:h-[min(70svh,560px)]"
         />
+      </div>
+    </section>
+  );
+}
 
-        {/* 1. Abertura */}
-        <div
-          ref={(el) => {
-            panelRefs.current[0] = el;
-          }}
-          className={panel}
-        >
-          <div className={inner}>
-            <p className={eyebrow}>Horta · Cozinha · Casa</p>
-            <h1 className="text-4xl text-[#faf6ee] sm:text-6xl">
-              Alimentar é uma forma de{" "}
-              <em className="text-[#cfe3a6]">cuidar.</em>
-            </h1>
-            <p className={lead}>
-              Da nossa horta e da cozinha da Chef Angela para a sua mesa.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/box" className={primary}>
-                Montar meu BOX
-              </Link>
-              <Link href="/loja" className={ghost}>
-                Ver a loja
-              </Link>
-            </div>
-            <p
-              aria-hidden="true"
-              className="hidden text-sm text-[#faf6ee]/65 group-data-[mode=live]/stage:block"
+/** 2. Salada no pote: a pessoa tira e coloca os ingredientes. */
+export function SaladStage({ photo }: { photo: StagePhoto }) {
+  const { boxRef, canvasRef, live, inJar, toggle } = useStage("salad");
+  return (
+    <section
+      aria-labelledby="monte-do-seu-jeito"
+      className="mx-auto max-w-6xl px-4 pt-20 sm:px-6"
+    >
+      {/* No celular o pote fica entre o título e os botões, para a pessoa ver
+          o ingrediente entrar e sair enquanto toca. */}
+      <div className="bg-sand-200/60 grid gap-x-6 gap-y-3 overflow-hidden rounded-(--radius-media) px-6 py-8 sm:px-10 md:grid-cols-2 md:grid-rows-[auto_1fr]">
+        <div className="flex flex-col gap-3 md:self-end">
+          <p className="text-leaf-700 text-xs font-medium tracking-widest uppercase">
+            Salada no pote
+          </p>
+          <h2 id="monte-do-seu-jeito" className="text-3xl sm:text-5xl">
+            Monte do seu jeito.
+          </h2>
+          <p className="text-ink-600 max-w-md sm:text-lg">
+            {live && "Toque nos ingredientes para tirar ou colocar. "}
+            Aqui a comida é pensada para você.
+          </p>
+        </div>
+        <StageCanvas
+          boxRef={boxRef}
+          canvasRef={canvasRef}
+          live={live}
+          photo={photo}
+          className="h-[44svh] min-h-[300px] md:col-start-2 md:row-span-2 md:row-start-1 md:h-[min(72svh,580px)]"
+        />
+        <div className="flex flex-col gap-4 md:self-start">
+          {live && (
+            <>
+              <ul
+                aria-label="Ingredientes da salada"
+                className="flex max-w-md flex-wrap gap-2"
+              >
+                {STAGE_INGREDIENTS.map((ing, i) => (
+                  <li key={ing.id}>
+                    <button
+                      type="button"
+                      aria-pressed={inJar[i]}
+                      onClick={() => toggle(ing.id)}
+                      className="border-ink-600/40 text-ink-600 min-h-9 rounded-full border px-3 text-sm font-medium transition-colors duration-300"
+                      style={
+                        inJar[i]
+                          ? {
+                              background: ing.color,
+                              borderColor: ing.color,
+                              color: "#12200f",
+                            }
+                          : undefined
+                      }
+                    >
+                      {ing.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-ink-600 text-xs">
+                Ilustração 3D. Os ingredientes de cada semana aparecem na loja.
+              </p>
+            </>
+          )}
+          <div>
+            <Link
+              href="/loja"
+              className="bg-forest-900 text-cream-50 hover:bg-forest-700 inline-flex min-h-11 items-center rounded-full px-6 font-medium"
             >
-              Role para montar a salada ↓
-            </p>
-            <Photo
-              src={saladPhoto.url}
-              alt={saladPhoto.alt}
-              priority
-              sizes="320px"
-              className={fallbackPhoto}
-            />
+              Ver a loja
+            </Link>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* 2. Salada: monte do seu jeito */}
-        <div
-          ref={(el) => {
-            panelRefs.current[1] = el;
-          }}
-          className={`${panel} group-data-[mode=live]/stage:invisible group-data-[mode=live]/stage:opacity-0`}
-        >
-          <div className={inner}>
-            <p className={eyebrow}>Salada no pote</p>
-            <h2 className="text-3xl text-[#faf6ee] sm:text-5xl">
-              Monte do seu jeito.
-            </h2>
-            <p className={lead}>
-              <span className="hidden group-data-[mode=live]/stage:inline">
-                Toque nos ingredientes para tirar ou colocar.{" "}
-              </span>
-              Aqui a comida é pensada para você.
-            </p>
-            <ul
-              aria-label="Ingredientes da salada"
-              className="hidden max-w-md flex-wrap gap-2 group-data-[mode=live]/stage:flex"
-            >
-              {STAGE_INGREDIENTS.map((ing, i) => (
-                <li key={ing.id}>
-                  <button
-                    type="button"
-                    aria-pressed={inJar[i]}
-                    disabled={!live}
-                    onClick={() => handleRef.current?.toggle(ing.id)}
-                    className="min-h-9 rounded-full border px-3 text-sm font-medium transition-colors duration-300"
-                    style={
-                      inJar[i]
-                        ? {
-                            background: ing.color,
-                            borderColor: ing.color,
-                            color: "#12200f",
-                          }
-                        : {
-                            borderColor: "rgba(250,246,238,.3)",
-                            color: "rgba(250,246,238,.6)",
-                          }
-                    }
-                  >
-                    {ing.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="hidden text-xs text-[#faf6ee]/55 group-data-[mode=live]/stage:block">
-              Ilustração 3D. Os ingredientes de cada semana aparecem na loja.
-            </p>
-            <Photo
-              src={saladPhotoAlt.url}
-              alt={saladPhotoAlt.alt}
-              sizes="320px"
-              className={fallbackPhoto}
-            />
+/** 3. Farofa: o pote transparente abre e mostra a farofa. */
+export function FarofaStage({ photo }: { photo: StagePhoto }) {
+  const { boxRef, canvasRef, live } = useStage("farofa");
+  return (
+    <section
+      aria-labelledby="farofa-nutritiva"
+      className="mx-auto max-w-6xl px-4 pt-20 sm:px-6"
+    >
+      <div
+        className="grid items-center gap-2 overflow-hidden rounded-(--radius-media) px-6 pt-8 text-[#faf6ee] sm:px-10 md:grid-cols-2 md:py-6"
+        style={{ background: DARK }}
+      >
+        <div className="flex flex-col gap-4">
+          <p className={eyebrowDark}>Produtos da Emkasa</p>
+          <h2
+            id="farofa-nutritiva"
+            className="text-3xl text-[#faf6ee] sm:text-5xl"
+          >
+            Farofa Nutritiva de Soja
+          </h2>
+          <p className="max-w-md text-[#faf6ee]/80 sm:text-lg">
+            {live && "Arraste para girar o pote e veja a farofa por dentro. "}
+            Feita aqui, para a sua despensa.
+          </p>
+          <div>
+            <Link href="/loja?secao=produtos-da-emkasa" className={primary}>
+              Ver produtos da Emkasa
+            </Link>
           </div>
         </div>
-
-        {/* 3. Farofa */}
-        <div
-          ref={(el) => {
-            panelRefs.current[2] = el;
-          }}
-          className={`${panel} group-data-[mode=live]/stage:invisible group-data-[mode=live]/stage:opacity-0`}
-        >
-          <div className={inner}>
-            <p className={eyebrow}>Produtos da Emkasa</p>
-            <h2 className="text-3xl text-[#faf6ee] sm:text-5xl">
-              Farofa Nutritiva de Soja
-            </h2>
-            <p className={lead}>
-              <span className="hidden group-data-[mode=live]/stage:inline">
-                Arraste para girar o pote e veja a farofa por dentro.{" "}
-              </span>
-              Feita aqui, para a sua despensa.
-            </p>
-            <div>
-              <Link href="/loja?secao=produtos-da-emkasa" className={primary}>
-                Ver produtos da Emkasa
-              </Link>
-            </div>
-            <Photo
-              src={farofaPhoto.url}
-              alt={farofaPhoto.alt}
-              ratio="4/3"
-              sizes="320px"
-              className={fallbackPhoto}
-            />
-          </div>
-        </div>
+        <StageCanvas
+          boxRef={boxRef}
+          canvasRef={canvasRef}
+          live={live}
+          photo={photo}
+          className="h-[48svh] min-h-[320px] md:h-[min(66svh,520px)]"
+        />
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PwaRegister } from "@/components/pwa-register";
+import { siteUrl } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -20,12 +21,23 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: {
     default: "Emkasa Gourmet",
     template: "%s · Emkasa Gourmet",
   },
-  description: "Alimentar é uma forma de cuidar.",
+  description:
+    "Alimentação saudável da Chef Angela Acioli: horta, cozinha e produtos próprios, BOX para a sua casa e ceias sob encomenda.",
   applicationName: "Emkasa Gourmet",
+  openGraph: {
+    type: "website",
+    siteName: "Emkasa Gourmet",
+    locale: "pt_BR",
+    title: "Emkasa Gourmet",
+    description: "Alimentar é uma forma de cuidar.",
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512 }],
+  },
+  twitter: { card: "summary" },
   appleWebApp: {
     capable: true,
     title: "Emkasa",

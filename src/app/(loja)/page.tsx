@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { HomeStage } from "@/components/loja/home-stage/home-stage";
+import {
+  FarofaStage,
+  HeroStage,
+  SaladStage,
+} from "@/components/loja/home-stage/home-stage";
 import { NatalBanner } from "@/components/loja/natal/natal-banner";
 import { Photo } from "@/components/loja/photo";
 import { ProductArt } from "@/components/loja/product-art";
@@ -8,6 +12,7 @@ import { Section } from "@/components/loja/section";
 import { BOX_PLANS, COURSES, RECIPES, TESTIMONIALS } from "@/demo/data";
 import { formatCents } from "@/lib/money";
 import { HOME_CAMPAIGN } from "@/modules/campanhas/home-campaign";
+import { jsonLd, organizationLd } from "@/modules/seo/json-ld";
 import { SITE_PHOTOS, STATIC_COVERS } from "@/modules/catalogo/static-photos";
 import { getStoreCatalog } from "@/modules/catalogo/store";
 
@@ -49,12 +54,12 @@ export default async function Home() {
 
   return (
     <main>
-      {/* Abertura: palco 3D com versão em fotos de reserva (D-034) */}
-      <HomeStage
-        saladPhoto={SITE_PHOTOS.saladaNoPote1}
-        saladPhotoAlt={SITE_PHOTOS.saladaNoPote2}
-        farofaPhoto={STATIC_COVERS["farofa-nutritiva-de-soja"]}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(organizationLd()) }}
       />
+      {/* Abertura: a caixa do BOX em 3D, com foto de reserva (D-038) */}
+      <HeroStage photo={SITE_PHOTOS.saladaNoPote1} />
 
       {HOME_CAMPAIGN === "natal" && <NatalBanner />}
 
@@ -87,6 +92,9 @@ export default async function Home() {
         </ol>
       </section>
 
+      {/* Um produto da casa em 3D abre as vitrines */}
+      <FarofaStage photo={STATIC_COVERS["farofa-nutritiva-de-soja"]} />
+
       {showcases.map(({ section, copy, products }) => (
         <Section
           key={section.slug}
@@ -106,6 +114,9 @@ export default async function Home() {
           </div>
         </Section>
       ))}
+
+      {/* Depois de ver os produtos: a salada que a pessoa monta */}
+      <SaladStage photo={SITE_PHOTOS.saladaNoPote2} />
 
       {orders && (
         <section

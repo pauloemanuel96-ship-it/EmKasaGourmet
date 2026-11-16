@@ -10,8 +10,11 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { STAGE_BEATS, STAGE_INGREDIENTS } from "./ingredients";
 
+export type StageKind = "box" | "salad" | "farofa";
+
 export type StageHandle = {
-  setProgress(p: number): void;
+  /** Começa a animação (a seção entrou na tela). */
+  start(): void;
   setActive(active: boolean): void;
   toggle(id: string): void;
   resize(): void;
@@ -19,6 +22,8 @@ export type StageHandle = {
 };
 
 export type StageOptions = {
+  /** Qual objeto esta cena mostra: a caixa do BOX, a salada ou a Farofa. */
+  kind: StageKind;
   assets: { labelA: string; labelB: string; farofa: string };
   reducedMotion: boolean;
   /** Avisa quais ingredientes estão no pote (mesma ordem de STAGE_INGREDIENTS). */
@@ -269,7 +274,7 @@ export function createStage(
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    alpha: false,
+    alpha: true,
     powerPreference: "high-performance",
   });
   let dpr = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -310,28 +315,6 @@ export function createStage(
   const rim = new THREE.PointLight(0xfed216, 14, 18);
   rim.position.set(-4, 1.8, -2.5);
   scene.add(rim);
-
-  /* fundo: gradiente verde-floresta com um brilho atrás do objeto */
-  let bgTex: THREE.Texture | null = null;
-  function paintBackground(cx: number, cy: number) {
-    bgTex?.dispose();
-    bgTex = canvasTexture(256, 256, (g, w, h) => {
-      const r = g.createRadialGradient(
-        cx * w,
-        cy * h,
-        0,
-        cx * w,
-        cy * h,
-        w * 0.85,
-      );
-      r.addColorStop(0, "#35583f");
-      r.addColorStop(0.42, "#1b3023");
-      r.addColorStop(1, "#0e1912");
-      g.fillStyle = r;
-      g.fillRect(0, 0, w, h);
-    });
-    scene.background = bgTex;
-  }
 
   const shadowTex = canvasTexture(128, 128, (g, w, h) => {
     const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
@@ -378,9 +361,9 @@ export function createStage(
     bumpScale: 0.6,
     roughness: 0.62,
   });
-  function board() {
+  function board(radius = 1.42) {
     const m = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.42, 1.38, 0.1, 72),
+      new THREE.CylinderGeometry(radius, radius - 0.04, 0.1, 72),
       woodMat,
     );
     m.position.y = -0.052;
@@ -879,7 +862,7 @@ export function createStage(
     );
     addLayer("tomate", 0.12, 0.2, ps, inst);
   }
-  scene.add(jar);
+  if (opts.kind === "salad") scene.add(jar);
 
   /* ===== pote da Farofa (embalagem transparente) ===== */
   const PH = 1.9;
@@ -1091,7 +1074,397 @@ export function createStage(
   potBody.add(lid);
   potBody.add(board());
   pot.visible = false;
-  scene.add(pot);
+  if (opts.kind === "farofa") scene.add(pot);
+
+  /* ===== BOX de frutas e verduras (abertura da home, D-038) ===== */
+  const crate = new THREE.Group();
+  const crateBody = new THREE.Group();
+  crateBody.position.y = -0.7;
+  crate.add(crateBody);
+  crateBody.add(board(1.62));
+  type Drop = {
+    m: THREE.Object3D;
+    y: number;
+    rx: number;
+    delay: number;
+    spin: number;
+    s: number;
+  };
+  const drops: Drop[] = [];
+  if (opts.kind === "box") {
+    const CW = 2.3;
+    const CD = 1.6;
+    const CH = 0.86;
+    const T = 0.05;
+    const slatMat = new THREE.MeshStandardMaterial({
+      map: woodTex,
+      bumpMap: woodTex,
+      bumpScale: 0.5,
+      color: 0xf6dcb2,
+      roughness: 0.72,
+    });
+    const slat = (
+      w: number,
+      h: number,
+      d: number,
+      x: number,
+      y: number,
+      z: number,
+    ) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), slatMat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      crateBody.add(m);
+    };
+    slat(CW, T, CD, 0, T / 2, 0);
+    for (let i = 0; i < 3; i++) {
+      const y = 0.17 + i * 0.27;
+      slat(CW, 0.2, T, 0, y, CD / 2);
+      slat(CW, 0.2, T, 0, y, -CD / 2);
+      slat(T, 0.2, CD - T, CW / 2, y, 0);
+      slat(T, 0.2, CD - T, -CW / 2, y, 0);
+    }
+    for (const sx of [1, -1])
+      for (const sz of [1, -1])
+        slat(0.1, CH, 0.1, sx * (CW / 2 - 0.02), CH / 2, sz * (CD / 2 - 0.02));
+    // plaquinha com o nome na frente da caixa
+    const plateTex = canvasTexture(512, 160, (g, w, h) => {
+      g.fillStyle = "#1f3a2b";
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#fed216";
+      g.lineWidth = 5;
+      g.strokeRect(9, 9, w - 18, h - 18);
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillStyle = "#faf6ee";
+      g.font = "600 78px Georgia, 'Times New Roman', serif";
+      g.fillText("emKasa", w / 2 - 70, h / 2 + 4);
+      g.fillStyle = "#fed216";
+      g.font = "700 60px Georgia, 'Times New Roman', serif";
+      g.fillText("BOX", w / 2 + 150, h / 2 + 6);
+    });
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.15, 0.36),
+      new THREE.MeshStandardMaterial({ map: plateTex, roughness: 0.6 }),
+    );
+    plate.position.set(0, 0.44, CD / 2 + T / 2 + 0.004);
+    crateBody.add(plate);
+
+    /* frutas e verduras: cada tipo tem sua forma, casca e cor */
+    const poreTex = canvasTexture(128, 128, (g, w, h) => {
+      g.fillStyle = "#808080";
+      g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 700; i++) {
+        g.fillStyle = rand() > 0.5 ? "#5e5e5e" : "#9c9c9c";
+        g.beginPath();
+        g.arc(rand() * w, rand() * h, 0.8 + rand() * 1.3, 0, 7);
+        g.fill();
+      }
+    });
+    poreTex.wrapS = poreTex.wrapT = THREE.RepeatWrapping;
+    poreTex.repeat.set(3, 2);
+    const citrus = (color: number) =>
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.5,
+        bumpMap: poreTex,
+        bumpScale: 0.9,
+      });
+    const stemMat = new THREE.MeshStandardMaterial({
+      color: 0x4a6b2a,
+      roughness: 0.8,
+    });
+    const withStem = (body: THREE.Mesh, y: number, h = 0.07) => {
+      const g = new THREE.Group();
+      const s = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.018, h, 6),
+        stemMat,
+      );
+      s.position.y = y;
+      s.rotation.z = 0.25;
+      body.castShadow = true;
+      body.receiveShadow = true;
+      g.add(body, s);
+      return g;
+    };
+    const orangeGeo = new THREE.SphereGeometry(0.25, 30, 22).scale(1, 0.95, 1);
+    const orangeMat = citrus(0xf08a1c);
+    const lemonGeo = (() => {
+      const g = new THREE.SphereGeometry(0.2, 28, 20);
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i);
+        const k = Math.pow(Math.abs(x) / 0.2, 3);
+        p.setX(i, x * (1.25 + 0.3 * k));
+        p.setY(i, p.getY(i) * (1 - 0.18 * k));
+        p.setZ(i, p.getZ(i) * (1 - 0.18 * k));
+      }
+      g.computeVertexNormals();
+      return g;
+    })();
+    const lemonMat = citrus(0xf2d23a);
+    const appleGeo = (() => {
+      const g = new THREE.SphereGeometry(0.25, 32, 24);
+      const p = g.attributes.position;
+      const red = new THREE.Color("#b0131f");
+      const blush = new THREE.Color("#d9b24a");
+      const col2 = new Float32Array(p.count * 3);
+      const c = new THREE.Color();
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i);
+        let y = p.getY(i) * 0.93;
+        const z = p.getZ(i);
+        const r2 = x * x + z * z;
+        if (y > 0) y -= 0.1 * Math.exp(-r2 / 0.007);
+        else y += 0.05 * Math.exp(-r2 / 0.006);
+        const wide = 1 + 0.06 * (y / 0.25);
+        p.setXYZ(i, x * wide, y, z * wide);
+        const a = Math.atan2(z, x);
+        c.copy(red).lerp(
+          blush,
+          clamp(0.5 + 0.6 * Math.sin(a * 1.3 + 1) - (y + 0.1) * 1.6) * 0.55,
+        );
+        col2[i * 3] = c.r;
+        col2[i * 3 + 1] = c.g;
+        col2[i * 3 + 2] = c.b;
+      }
+      g.setAttribute("color", new THREE.BufferAttribute(col2, 3));
+      g.computeVertexNormals();
+      return g;
+    })();
+    const appleMat = new THREE.MeshPhysicalMaterial({
+      vertexColors: true,
+      roughness: 0.32,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.2,
+    });
+    const tomatoGeo = tomatoGeometry();
+    const tomatoMat = new THREE.MeshPhysicalMaterial({
+      vertexColors: true,
+      roughness: 0.22,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.15,
+    });
+    const carrotGeo = (() => {
+      const body = new THREE.ConeGeometry(0.095, 0.78, 18, 14)
+        .rotateZ(Math.PI / 2)
+        .toNonIndexed();
+      const p = body.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i);
+        const s = 1 + 0.05 * Math.sin(x * 46);
+        p.setY(i, p.getY(i) * s);
+        p.setZ(i, p.getZ(i) * s);
+      }
+      const o1 = new THREE.Color("#ef7d12");
+      const o2 = new THREE.Color("#d9650a");
+      paint(body, (x) => o1.clone().lerp(o2, 0.5 + 0.5 * Math.sin(x * 46)));
+      const parts = [body];
+      for (let i = 0; i < 5; i++) {
+        const leaf = new THREE.ConeGeometry(0.02, 0.34, 5)
+          .rotateZ(Math.PI / 2 + (i - 2) * 0.2)
+          .translate(0.5, (i - 2) * 0.035, ((i % 2) - 0.5) * 0.05)
+          .toNonIndexed();
+        parts.push(paint(leaf, "#4f8a2c"));
+      }
+      const merged = mergeGeometries(parts);
+      merged.computeVertexNormals();
+      return merged;
+    })();
+    const carrotMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.6,
+    });
+    /** Forma de revolução curvada: banana e berinjela. */
+    const bent = (
+      profile: [number, number][],
+      bend: number,
+      color: (t: number) => THREE.Color,
+    ) => {
+      const pts = profile.map(([r, y]) => new THREE.Vector2(r, y));
+      const g = new THREE.LatheGeometry(pts, 20);
+      const p = g.attributes.position;
+      const len = profile[profile.length - 1][1] - profile[0][1];
+      const R = len / bend;
+      const colr = new Float32Array(p.count * 3);
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i);
+        const y = p.getY(i);
+        const a = (y / len) * bend;
+        p.setXYZ(
+          i,
+          (x + R) * Math.cos(a) - R,
+          (x + R) * Math.sin(a),
+          p.getZ(i),
+        );
+        const c = color((y - profile[0][1]) / len);
+        colr[i * 3] = c.r;
+        colr[i * 3 + 1] = c.g;
+        colr[i * 3 + 2] = c.b;
+      }
+      g.setAttribute("color", new THREE.BufferAttribute(colr, 3));
+      g.computeVertexNormals();
+      return g;
+    };
+    const yel = new THREE.Color("#f3d03c");
+    const brown = new THREE.Color("#5c4320");
+    const green = new THREE.Color("#9db43a");
+    const bananaGeo = bent(
+      [
+        [0.001, -0.42],
+        [0.03, -0.4],
+        [0.07, -0.3],
+        [0.085, 0],
+        [0.07, 0.3],
+        [0.035, 0.4],
+        [0.02, 0.47],
+        [0.001, 0.48],
+      ],
+      1.1,
+      (t) =>
+        t < 0.06
+          ? brown.clone()
+          : t > 0.9
+            ? green.clone().lerp(brown, (t - 0.9) * 6)
+            : yel.clone(),
+    );
+    const bananaMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.5,
+    });
+    const purple = new THREE.Color("#2f1640");
+    const purple2 = new THREE.Color("#4b2463");
+    const cap = new THREE.Color("#4f7a2e");
+    const eggplantGeo = bent(
+      [
+        [0.001, -0.36],
+        [0.12, -0.33],
+        [0.19, -0.2],
+        [0.2, -0.05],
+        [0.15, 0.15],
+        [0.09, 0.3],
+        [0.075, 0.36],
+        [0.09, 0.38],
+        [0.03, 0.44],
+        [0.015, 0.52],
+      ],
+      0.45,
+      (t) => (t > 0.8 ? cap.clone() : purple.clone().lerp(purple2, t)),
+    );
+    const eggplantMat = new THREE.MeshPhysicalMaterial({
+      vertexColors: true,
+      roughness: 0.2,
+      clearcoat: 1,
+      clearcoatRoughness: 0.1,
+    });
+    const leafGeo = lettuceGeometry();
+    const leafMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.5,
+      side: THREE.DoubleSide,
+      emissive: 0x2c5a12,
+      emissiveIntensity: 0.2,
+    });
+    const floretGeo = floretGeometry(rand);
+    const floretMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.85,
+      flatShading: true,
+    });
+
+    const solid = (geo: THREE.BufferGeometry, mat: THREE.Material) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      return m;
+    };
+    const make: Record<string, () => THREE.Object3D> = {
+      laranja: () => withStem(solid(orangeGeo, orangeMat), 0.235, 0.03),
+      limao: () => solid(lemonGeo, lemonMat),
+      maca: () => withStem(solid(appleGeo, appleMat), 0.2),
+      tomate: () => {
+        const m = solid(tomatoGeo, tomatoMat);
+        m.scale.setScalar(1.55);
+        return m;
+      },
+      cenoura: () => solid(carrotGeo, carrotMat),
+      banana: () => {
+        const g = new THREE.Group();
+        for (let i = 0; i < 3; i++) {
+          const b = solid(bananaGeo, bananaMat);
+          b.rotation.set(0.25 * (i - 1), 0, Math.PI / 2);
+          b.position.set(0, 0.03 * i, (i - 1) * 0.13);
+          g.add(b);
+        }
+        return g;
+      },
+      berinjela: () => {
+        const m = solid(eggplantGeo, eggplantMat);
+        m.rotation.z = Math.PI / 2;
+        const g = new THREE.Group();
+        g.add(m);
+        return g;
+      },
+      alface: () => {
+        const g = new THREE.Group();
+        for (let i = 0; i < 12; i++) {
+          const leaf = solid(leafGeo, leafMat);
+          const inner = i >= 8;
+          const a = (i / (inner ? 4 : 8)) * Math.PI * 2 + (inner ? 0.4 : 0);
+          leaf.rotation.set(inner ? -0.35 : -0.95, a, 0, "YXZ");
+          leaf.scale.setScalar(inner ? 0.62 : 0.86);
+          g.add(leaf);
+        }
+        return g;
+      },
+      brocolis: () => {
+        const m = solid(floretGeo, floretMat);
+        m.scale.setScalar(3.3);
+        return m;
+      },
+    };
+    // [tipo, x, y, z, giro, inclinação]
+    const pile: [string, number, number, number, number, number][] = [
+      ["laranja", -0.8, 0.31, -0.42, 0.3, 0.2],
+      ["maca", -0.28, 0.31, -0.44, 1.2, 0.15],
+      ["laranja", 0.26, 0.31, -0.42, 2.0, -0.2],
+      ["maca", 0.8, 0.31, -0.4, 0.5, 0.3],
+      ["limao", -0.82, 0.27, 0.08, 0.6, 0],
+      ["tomate", -0.3, 0.28, 0.1, 1.5, 0.2],
+      ["laranja", 0.28, 0.31, 0.08, 0.9, 0.3],
+      ["maca", 0.82, 0.31, 0.1, 2.6, -0.2],
+      ["tomate", -0.78, 0.28, 0.5, 0.2, 0.3],
+      ["limao", -0.25, 0.27, 0.5, 2.2, 0],
+      ["cenoura", 0.5, 0.2, 0.52, 3.3, 0],
+      ["alface", -0.55, 0.52, -0.12, 0.4, 0],
+      ["brocolis", 0.55, 0.78, -0.22, 1.0, 0.25],
+      ["berinjela", 0.6, 0.72, 0.36, 0.5, 0.1],
+      ["banana", -0.05, 0.78, 0.34, -0.3, 0.2],
+      ["cenoura", -0.62, 0.66, 0.5, 0.25, 0.12],
+      ["cenoura", -0.5, 0.74, 0.38, 0.5, -0.1],
+      ["maca", 0.08, 0.74, -0.46, 0.7, 0.3],
+      ["laranja", -0.98, 0.74, -0.46, 1.9, 0.2],
+      ["tomate", 0.98, 0.72, 0.52, 0.4, 0.2],
+    ];
+    pile.forEach(([kind, x, y, z, ry, rx], i) => {
+      const m = make[kind]();
+      m.position.set(x, y, z);
+      m.rotation.y = ry;
+      m.rotation.x += rx;
+      m.visible = false;
+      crateBody.add(m);
+      drops.push({
+        m,
+        y,
+        rx: m.rotation.x,
+        delay: i * 0.17,
+        spin: 1.5 + rand() * 2.5,
+        s: m.scale.x,
+      });
+    });
+    scene.add(crate);
+  }
 
   /* ===== folhas flutuando ===== */
   const leafShape = new THREE.Shape();
@@ -1121,10 +1494,11 @@ export function createStage(
       w: (rand() - 0.5) * 0.5,
     };
   });
-  scene.add(leaves);
+  if (opts.kind === "box") scene.add(leaves);
 
   /* ===== estado ===== */
   let P = 0;
+  let startedAt = -1;
   let active = true;
   let disposed = false;
   let needsRender = true;
@@ -1211,17 +1585,9 @@ export function createStage(
     camera.updateProjectionMatrix();
     const visH = 2 * 10 * Math.tan((16 * Math.PI) / 180);
     visW = visH * camera.aspect;
-    if (w >= 768 && camera.aspect > 1) {
-      baseX = visW * 0.23;
-      baseY = -0.1;
-      baseS = Math.min(1.05, (visH * 0.64) / 3.3);
-      paintBackground(0.73, 0.5);
-    } else {
-      baseX = 0;
-      baseY = -visH * 0.185;
-      baseS = Math.min((visH * 0.39) / 3.3, (visW * 0.84) / 2.4);
-      paintBackground(0.5, 0.66);
-    }
+    baseX = 0;
+    baseY = opts.kind === "box" ? 0.2 : opts.kind === "farofa" ? 0.1 : -0.1;
+    baseS = Math.min((visH * 0.8) / 3.5, (visW * 0.9) / 3.0);
     needsRender = true;
   }
 
@@ -1277,6 +1643,14 @@ export function createStage(
       dragV *= 0.93;
     }
 
+    // Cada cena anda sozinha depois que entra na tela (antes era o scroll).
+    const el = startedAt < 0 ? -1 : (now - startedAt) / 1000;
+    if (opts.kind === "salad") {
+      P = el < 0 ? 0 : STAGE_BEATS.assembleStart + Math.min(1, el / 4.4) * 0.4;
+    } else if (opts.kind === "farofa") {
+      P = el < 0 ? 0.74 : 0.74 + Math.min(1, Math.max(0, el - 0.6) / 2.2) * 0.2;
+    }
+
     /* salada */
     let stackY = 0;
     let animating = false;
@@ -1304,7 +1678,7 @@ export function createStage(
     emitState();
 
     const out = ease((P - STAGE_BEATS.swapStart) / 0.1);
-    jar.visible = out < 1;
+    jar.visible = opts.kind === "salad";
     if (jar.visible) {
       jar.position.set(
         baseX - out * visW * 1.15,
@@ -1327,7 +1701,7 @@ export function createStage(
 
     /* farofa */
     const inn = ease((P - (STAGE_BEATS.swapStart + 0.03)) / 0.1);
-    pot.visible = inn > 0;
+    pot.visible = opts.kind === "farofa";
     if (pot.visible) {
       const open = smooth(
         (P - STAGE_BEATS.lidStart) /
@@ -1338,7 +1712,7 @@ export function createStage(
         baseY + 0.05 + Math.sin(idle * 0.9 + 1) * 0.04,
         0,
       );
-      pot.scale.setScalar(baseS * 1.06 * (0.8 + 0.2 * inn));
+      pot.scale.setScalar(baseS * 0.86 * (0.8 + 0.2 * inn));
       pot.rotation.set(
         0.2 + open * 0.42 + py * 0.05,
         -Math.PI / 2 +
@@ -1350,6 +1724,22 @@ export function createStage(
       );
       lid.position.set(open * 0.5, PH + 0.02 + open * 0.7, -open * 0.9);
       lid.rotation.set(-open * 0.9, 0, -open * 0.25);
+    }
+
+    /* BOX */
+    if (opts.kind === "box") {
+      crate.position.set(baseX, baseY, 0);
+      crate.scale.setScalar(baseS * 1.08);
+      crate.rotation.set(0.5 + py * 0.04, -0.45 + idle * 0.1 + drag, 0);
+      for (const d of drops) {
+        const t = el < 0 ? 0 : clamp((el - d.delay) / 0.75);
+        if (t < 1) animating = true;
+        const e = fall(t);
+        d.m.visible = t > 0;
+        d.m.position.y = d.y + (1 - e) * 4.2;
+        d.m.rotation.x = d.rx + (1 - e) * d.spin;
+        d.m.scale.setScalar(d.s * Math.min(1, t / 0.12 + 0.001));
+      }
     }
 
     /* folhas */
@@ -1390,9 +1780,8 @@ export function createStage(
   kick();
 
   return {
-    setProgress(p) {
-      P = clamp(p);
-      if (P < 0.06) forceAll = false;
+    start() {
+      if (startedAt < 0) startedAt = performance.now();
       needsRender = true;
       kick();
     },
@@ -1432,7 +1821,6 @@ export function createStage(
         mats.forEach((mat) => mat.dispose());
       });
       [
-        bgTex,
         shadowTex,
         woodTex,
         farofaTex,

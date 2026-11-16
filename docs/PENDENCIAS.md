@@ -75,7 +75,7 @@ Cada item é um módulo. O de cima destrava os de baixo.
 6. 🟠 **Registro de visitas e funil** (quem acessou, quando, de onde veio, o que viu, onde desistiu) e **painel master** só para o owner.
 7. 🟠 **Painéis por papel:** owner com tudo (tráfego, funil, origem, contatos, auditoria); admin com financeiro, pedidos e ajustes. Os papéis já existem no banco; falta separar as telas.
 8. 🟠 **Integração Google Ads e Meta Ads** (conversões pelo servidor). Precisa das contas de anúncio.
-9. 🟠 **SEO:** títulos e descrições por página, dados estruturados de produto e empresa, sitemap, imagem de compartilhamento. Sem texto escondido nem lista de palavras-chave: o Google trata como spam e pode rebaixar o site.
+9. ✅ **SEO (base feita em 16/11, D-039):** metadados, dados estruturados de empresa e produto, sitemap e robots. Falta: cadastrar o site no Google Search Console e enviar o sitemap (precisa da sua conta Google), imagem de compartilhamento própria (hoje usa o logo) e textos de descrição dos produtos reais.
 10. 🟠 **Minha Casa no banco:** foto de perfil ou da família, cada familiar com restrições, o que gosta e não gosta, idade e objetivo. Hoje é protótipo no navegador. Dado de saúde e de criança: consentimento específico e opção de apagar. Decidir se peso entra mesmo (coletar só o que for usado).
 11. 🟠 **Assistente do cliente** (botão flutuante) com IA: ajuda na compra e pode propor o cadastro de um familiar, que a pessoa confirma. Precisa da chave da API e de limite de custo por mês.
 12. ⚪ **Plantas, mudas e flores sob encomenda.** Entra como uma seção da loja com pedido por orçamento, igual a Encomendas. Definir nome (evitar "Mundo Verde", que é marca de uma rede de lojas), produtos, fotos e preços.
