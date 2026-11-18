@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChefRequestForm } from "@/components/loja/chef/chef-request-form";
 import { ChefStage } from "@/components/loja/chef/chef-stage";
+import { VideoBackdrop } from "@/components/loja/video-backdrop";
 import { SITE_PHOTOS } from "@/modules/catalogo/static-photos";
 import { CHEF_CITY, CHEF_FORMATS } from "@/modules/chef/schemas";
 
@@ -81,38 +82,82 @@ export default function ChefEmkasaPage() {
           "radial-gradient(80% 50% at 85% 0%, rgba(254,210,22,0.10), transparent 60%), linear-gradient(180deg, #120d09 0%, #0b0907 55%, #120d09 100%)",
       }}
     >
-      {/* Abertura */}
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-10 pb-16 sm:px-6 md:grid-cols-[1fr_1.1fr] md:pt-16">
-        <div className="flex flex-col gap-5">
+      {/* Abertura em vídeo (D-050) */}
+      <section
+        aria-label="Apresentação"
+        className="relative isolate flex min-h-[calc(100svh-11rem)] items-end overflow-hidden md:min-h-[calc(100svh-6.5rem)] md:items-center"
+      >
+        <VideoBackdrop
+          base="/video/chef"
+          poster="/video/chef-poster.webp"
+          alt="Mãos de chef montando uma salada num prato de cerâmica"
+        />
+        {/* escurece só onde o texto fica; o prato continua aparecendo */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0b0907] via-[#0b0907]/70 to-[#0b0907]/5 md:bg-gradient-to-r md:from-[#0b0907]/95 md:via-[#0b0907]/55 md:to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-b from-transparent to-[#120d09]"
+        />
+        <div className="mx-auto w-full max-w-6xl px-4 pt-48 pb-10 sm:px-6 md:py-16">
+          <div className="flex max-w-xl flex-col gap-5">
+            <p
+              className="flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase"
+              style={{ color: GOLD }}
+            >
+              <span aria-hidden="true" className="fit-dot" />
+              Chef Emkasa · {CHEF_CITY}
+            </p>
+            <h1 className="font-serif text-4xl leading-tight text-[#faf3e6] sm:text-6xl">
+              A cozinha da Chef Angela, na sua casa.
+            </h1>
+            <p className="max-w-md text-lg text-[#faf3e6]/85">
+              Um jantar para comemorar ou a comida da semana pronta e
+              porcionada. Feito na sua cozinha, pensado para quem mora aí.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="#pedido"
+                className="inline-flex min-h-12 items-center rounded-full px-6 font-semibold text-[#1a120c] shadow-[0_0_24px_rgba(254,210,22,0.35)] active:scale-[0.97]"
+                style={{ background: GOLD }}
+              >
+                Pedir minha proposta
+              </a>
+              <a
+                href="#como-funciona"
+                className="inline-flex min-h-12 items-center rounded-full border border-[#faf3e6]/40 bg-[#0b0907]/30 px-6 font-medium backdrop-blur-sm hover:bg-[#faf3e6]/10"
+              >
+                Como funciona
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mesa posta em 3D */}
+      <section
+        aria-labelledby="mesa-posta"
+        className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-14 pb-10 sm:px-6 md:grid-cols-[0.9fr_1.1fr]"
+      >
+        <div className="flex flex-col gap-4">
           <p
-            className="flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase"
+            className="text-xs font-semibold tracking-[0.25em] uppercase"
             style={{ color: GOLD }}
           >
-            <span aria-hidden="true" className="fit-dot" />
-            Chef Emkasa · {CHEF_CITY}
+            A mesa posta
           </p>
-          <h1 className="font-serif text-4xl leading-tight text-[#faf3e6] sm:text-5xl">
-            A cozinha da Chef Angela, na sua casa.
-          </h1>
-          <p className="max-w-md text-lg text-[#faf3e6]/75">
-            Um jantar para comemorar ou a comida da semana pronta e porcionada.
-            Feito na sua cozinha, pensado para quem mora aí.
+          <h2
+            id="mesa-posta"
+            className="font-serif text-3xl text-[#faf3e6] sm:text-4xl"
+          >
+            Levante a tampa.
+          </h2>
+          <p className="text-[#faf3e6]/75">
+            Comida de verdade, montada na hora, servida no seu prato. Toque no
+            prato para abrir e fechar; arraste para girar a mesa.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="#pedido"
-              className="inline-flex min-h-12 items-center rounded-full px-6 font-semibold text-[#1a120c] shadow-[0_0_24px_rgba(254,210,22,0.35)] active:scale-[0.97]"
-              style={{ background: GOLD }}
-            >
-              Pedir minha proposta
-            </a>
-            <a
-              href="#como-funciona"
-              className="inline-flex min-h-12 items-center rounded-full border border-[#faf3e6]/25 px-6 font-medium hover:bg-[#faf3e6]/10"
-            >
-              Como funciona
-            </a>
-          </div>
         </div>
         <ChefStage />
       </section>

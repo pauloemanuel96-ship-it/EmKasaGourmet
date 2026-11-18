@@ -78,7 +78,6 @@ export function ChefStage() {
           fill
           sizes="(min-width: 768px) 50vw, 100vw"
           className="object-cover opacity-90"
-          priority
         />
       )}
       <canvas
