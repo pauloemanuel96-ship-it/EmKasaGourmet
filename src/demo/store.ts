@@ -5,6 +5,7 @@
  * Uma única fonte para loja e painel: o que a Chef muda na tela Hoje aparece na loja na hora.
  * Será substituído pelo Supabase módulo a módulo.
  */
+import { track } from "@/modules/trafego/tracker";
 import { useSyncExternalStore } from "react";
 import {
   BOX_PLANS,
@@ -240,10 +241,13 @@ export const demo = {
         : [...s.cart, snap ? { slug, quantity, snap } : { slug, quantity }];
       return { ...s, cart };
     });
+    track("add_to_cart", { product_slug: slug, quantity });
     return { ok: true, message: "Adicionado ao carrinho." };
   },
 
   setCartQuantity(slug: string, quantity: number) {
+    load();
+    const before = state.cart.find((c) => c.slug === slug)?.quantity ?? 0;
     set((s) => {
       const max = availableOf(s, slug);
       const q = Math.max(0, Math.min(quantity, max));
@@ -255,6 +259,15 @@ export const demo = {
             : s.cart.map((c) => (c.slug === slug ? { ...c, quantity: q } : c)),
       };
     });
+    const after = state.cart.find((c) => c.slug === slug)?.quantity ?? 0;
+    if (after < before) {
+      track("remove_from_cart", {
+        product_slug: slug,
+        quantity: before - after,
+      });
+    } else if (after > before) {
+      track("add_to_cart", { product_slug: slug, quantity: after - before });
+    }
   },
 
   addBoxToCart(items: BoxItem[]) {
@@ -323,6 +336,7 @@ export const demo = {
         },
       );
     });
+    track("order_placed");
     return { ok: true, number };
   },
 

@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { CONSENT_EVENT, readConsent } from "@/modules/consent/cookies";
 import { captureLead, type LeadState } from "@/modules/leads/actions";
 import { rememberOrigin } from "@/modules/leads/origin";
+import { track } from "@/modules/trafego/tracker";
 import {
   LEAD_CONSENT_TEXT,
   LEAD_POPUP_COPY,
@@ -79,6 +80,7 @@ export function LeadPopup() {
 
   useEffect(() => {
     if (state.status !== "ok") return;
+    track("lead");
     try {
       localStorage.setItem(KEY, "feito");
     } catch {

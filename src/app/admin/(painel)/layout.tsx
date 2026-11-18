@@ -2,6 +2,22 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { signOut } from "@/modules/auth/actions";
+import { ROLE_LABEL, getCurrentUser } from "@/modules/auth/staff";
+
+/** Menu do papel de quem entrou, com o nome do papel ao lado. */
+async function RoleNav() {
+  const user = await getCurrentUser();
+  return (
+    <div className="flex items-center gap-2">
+      {user?.role && (
+        <span className="text-leaf-700 hidden shrink-0 px-2 text-xs font-semibold tracking-widest uppercase sm:inline">
+          {ROLE_LABEL[user.role]}
+        </span>
+      )}
+      <AdminNav role={user?.role ?? null} />
+    </div>
+  );
+}
 
 export default function PainelLayout({ children }: LayoutProps<"/admin">) {
   return (
@@ -27,7 +43,7 @@ export default function PainelLayout({ children }: LayoutProps<"/admin">) {
         </div>
         <div className="mx-auto max-w-5xl px-2 pb-2">
           <Suspense fallback={<div className="h-11" />}>
-            <AdminNav />
+            <RoleNav />
           </Suspense>
         </div>
       </header>

@@ -2,27 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { StaffRole } from "@/modules/auth/staff";
 
-const ITEMS = [
-  { href: "/admin", label: "Início" },
-  { href: "/admin/hoje", label: "Hoje" },
-  { href: "/admin/pedidos", label: "Pedidos" },
-  { href: "/admin/produtos", label: "Produtos" },
-  { href: "/admin/midia", label: "Fotos" },
-  { href: "/admin/categorias", label: "Categorias" },
-  { href: "/admin/ingredientes", label: "Ingredientes" },
-  { href: "/admin/campanhas", label: "Campanhas" },
-  { href: "/admin/clientes", label: "Clientes" },
-  { href: "/admin/leads", label: "Contatos" },
-  { href: "/admin/configuracoes", label: "Configurações" },
-  { href: "/admin/assistente", label: "Assistente" },
+const ALL: StaffRole[] = ["owner", "admin", "operacao", "atendimento"];
+const MANAGERS: StaffRole[] = ["owner", "admin"];
+
+/**
+ * Menu por papel (D-048). Cada item aparece só para quem a página aceita; a
+ * página confere de novo no servidor. O dono vê tudo, inclusive Tráfego.
+ */
+const ITEMS: { href: string; label: string; roles: StaffRole[] }[] = [
+  { href: "/admin", label: "Início", roles: ALL },
+  { href: "/admin/trafego", label: "Tráfego", roles: ["owner"] },
+  { href: "/admin/hoje", label: "Hoje", roles: ALL },
+  { href: "/admin/pedidos", label: "Pedidos", roles: ALL },
+  {
+    href: "/admin/produtos",
+    label: "Produtos",
+    roles: ["owner", "admin", "operacao"],
+  },
+  { href: "/admin/midia", label: "Fotos", roles: MANAGERS },
+  { href: "/admin/categorias", label: "Categorias", roles: MANAGERS },
+  { href: "/admin/ingredientes", label: "Ingredientes", roles: MANAGERS },
+  { href: "/admin/campanhas", label: "Campanhas", roles: MANAGERS },
+  { href: "/admin/clientes", label: "Clientes", roles: MANAGERS },
+  { href: "/admin/leads", label: "Contatos", roles: MANAGERS },
+  { href: "/admin/chef", label: "Chef Emkasa", roles: MANAGERS },
+  { href: "/admin/configuracoes", label: "Configurações", roles: MANAGERS },
+  { href: "/admin/assistente", label: "Assistente", roles: ALL },
 ];
 
-export function AdminNav() {
+export function menuFor(role: StaffRole | null) {
+  return role ? ITEMS.filter((i) => i.roles.includes(role)) : [];
+}
+
+export function AdminNav({ role }: { role: StaffRole | null }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Painel" className="flex gap-1 overflow-x-auto">
-      {ITEMS.map((i) => {
+      {menuFor(role).map((i) => {
         const active =
           i.href === "/admin"
             ? pathname === "/admin"

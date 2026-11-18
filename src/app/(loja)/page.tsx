@@ -212,6 +212,26 @@ export default async function Home() {
             [Texto provisório: a versão final será escrita e aprovada pela
             Chef.]
           </p>
+          <Link
+            href="/chef-emkasa"
+            className="group mt-2 flex items-center gap-4 rounded-(--radius-media) bg-[#120d09] p-4 pr-5 text-[#faf3e6] shadow-[0_0_0_1px_rgba(254,210,22,0.45),0_0_28px_rgba(254,210,22,0.15)]"
+          >
+            <span aria-hidden="true" className="fit-dot shrink-0" />
+            <span className="flex flex-col">
+              <span className="text-xs font-semibold tracking-[0.2em] text-[#fed216] uppercase">
+                Novo · Chef Emkasa
+              </span>
+              <span className="font-medium">
+                A Chef na sua casa: jantar especial ou a comida da semana
+              </span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="ml-auto text-[#fed216] transition group-hover:translate-x-1"
+            >
+              →
+            </span>
+          </Link>
         </div>
       </section>
 

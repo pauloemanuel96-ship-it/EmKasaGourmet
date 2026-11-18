@@ -72,8 +72,8 @@ Cada item é um módulo. O de cima destrava os de baixo.
 3. 🔴 **Pagamento real** (conta Mercado Pago da empresa; hoje é teste).
 4. 🟠 **Cupons e descontos.** O aviso de ofertas promete desconto, mas ainda não existe cupom no sistema. Definir os descontos da Black Friday (percentual, produtos, validade).
 5. ✅ **Aviso de cookies com consentimento (construído em 16/11, D-045):** necessários, medição e anúncios, com reabertura pelo rodapé. Falta: página de política de privacidade e cookies com texto validado (ver Legal).
-6. 🟠 **Registro de visitas e funil** (quem acessou, quando, de onde veio, o que viu, onde desistiu) e **painel master** só para o owner.
-7. 🟠 **Painéis por papel:** owner com tudo (tráfego, funil, origem, contatos, auditoria); admin com financeiro, pedidos e ajustes. Os papéis já existem no banco; falta separar as telas.
+6. ✅ **Registro de visitas e funil (construído em 17/11, D-047):** Radar da loja em Painel → Tráfego, só para o dono: visitantes, origem, aparelho, funil, carrinho abandonado, itens que entraram e saíram do carrinho e últimas visitas. Falta: o pedido final do funil vira real com o carrinho de verdade; aviso por e-mail ou WhatsApp para carrinho abandonado (precisa de ferramenta de disparo).
+7. ✅ **Painéis por papel (feito em 17/11, D-048):** cada papel vê só o seu menu; o dono vê também o Tráfego. Falta: tela de financeiro para a administração, que depende dos pedidos de verdade.
 8. 🟠 **Integração Google Ads e Meta Ads** (conversões pelo servidor). Precisa das contas de anúncio.
 9. ✅ **SEO (base feita em 16/11, D-039):** metadados, dados estruturados de empresa e produto, sitemap e robots. Falta: cadastrar o site no Google Search Console e enviar o sitemap (precisa da sua conta Google), imagem de compartilhamento própria (hoje usa o logo) e textos de descrição dos produtos reais.
 10. ✅ **Família na Minha Casa (construída em 16/11, D-043):** cada pessoa com quem é, ano de nascimento, o que gosta e não gosta, dieta, o que não pode comer e objetivo, com autorização de saúde. O BOX já usa esses perfis para quem está logado (D-046). Falta: foto de perfil ou da família; peso, que ficou de fora até haver um uso definido.
@@ -91,3 +91,15 @@ Cada item é um módulo. O de cima destrava os de baixo.
 - 🟠 **Domínio próprio do site**, se houver, para os links dos e-mails não saírem com `vercel.app`.
 - ✅ **Endereço (definido pelo Paulo em 16/11):** entra no cadastro e é confirmado na hora da compra. A conta guarda vários endereços, cada um com um nome (casa, trabalho, casa do pai, da mãe, do filho), sempre pensando na família. A pessoa pode partir da localização do aparelho e ajustar os dados à mão.
 - 🟠 **Serviço de mapa para "usar minha localização".** Preencher pelo CEP é gratuito e entra de início. Transformar o GPS do aparelho em rua e número precisa de um serviço de mapas, em geral pago por uso (ex.: Google Maps): escolher qual e criar a chave.
+
+## Chef Emkasa (D-049): o que falta o Paulo definir
+A página `/chef-emkasa` já recebe pedidos de proposta. Para virar venda com agenda e preço, faltam:
+- quem cozinha no começo (a Chef Angela, outra pessoa ou os dois);
+- bairros de Aracaju atendidos e taxa de deslocamento;
+- dias, períodos e quantos atendimentos por dia;
+- Ocasião: mínimo e máximo de pessoas, quantos tempos, louça e bebida;
+- Semana: refeições por visita, duração da visita, quem faz o mercado;
+- preço de cada formato e da assinatura; sinal e regra de cancelamento;
+- cardápios-base com a ficha de alergênicos de cada prato;
+- enquadramento fiscal com o contador;
+- texto da Chef aprovado por ela (o mesmo texto provisório da home) e, se houver, uma foto atual dela cozinhando em casa de cliente.

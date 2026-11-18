@@ -8,6 +8,7 @@ import { cartCount, useDemo } from "@/demo/store";
 const NAV = [
   { href: "/loja", label: "Loja" },
   { href: "/box", label: "BOX" },
+  { href: "/chef-emkasa", label: "Chef em casa" },
   { href: "/receitas", label: "Receitas" },
   { href: "/escola", label: "Escola" },
   { href: "/clube", label: "Clube" },
