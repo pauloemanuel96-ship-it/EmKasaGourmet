@@ -11,7 +11,7 @@ export function SiteFooter() {
           <p className="text-ink-600 text-sm">
             Alimentar é uma forma de cuidar.
           </p>
-          <ThemeToggle />
+          <ThemeToggle className="-ml-3" />
         </div>
         <nav aria-label="Rodapé" className="flex flex-col gap-2 text-sm">
           <Link href="/loja" className="text-ink-600 hover:text-forest-900">

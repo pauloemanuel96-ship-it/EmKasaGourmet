@@ -1,3 +1,4 @@
+import { ShareButton } from "@/components/loja/share-button";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DemoTag } from "@/components/loja/demo-tag";
@@ -157,6 +158,12 @@ export default async function NatalPage() {
           >
             Ver o cardápio
           </a>
+          <ShareButton
+            tone="dark"
+            title="Natal Emkasa"
+            text="A ceia de Natal da Emkasa, natural e sob encomenda:"
+            path="/natal"
+          />
         </div>
       </NatalStage>
 

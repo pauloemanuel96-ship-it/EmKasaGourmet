@@ -15,6 +15,7 @@ import { getStoreCatalog, getStoreProduct } from "@/modules/catalogo/store";
 import { whatsappLink } from "@/modules/catalogo/store-types";
 import { STORAGE_LABEL } from "@/modules/catalogo/types";
 import { jsonLd, productLd } from "@/modules/seo/json-ld";
+import { ShareButton } from "@/components/loja/share-button";
 
 export async function generateStaticParams() {
   const catalog = await getStoreCatalog();
@@ -116,7 +117,14 @@ export default async function ProdutoPage({
               {p.path.join(" · ")}
             </p>
             <h1 className="text-4xl">{p.name}</h1>
-            <p className="text-ink-600">{p.unitLabel}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-ink-600">{p.unitLabel}</p>
+              <ShareButton
+                title={`${p.name} | Emkasa Gourmet`}
+                text={`Olha isso da Emkasa: ${p.name}`}
+                path={`/produto/${p.slug}`}
+              />
+            </div>
             {p.comingSoon ? (
               <p className="text-terracotta-500 text-2xl font-medium">
                 Preço a definir

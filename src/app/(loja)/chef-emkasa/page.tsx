@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ChefRequestForm } from "@/components/loja/chef/chef-request-form";
-import { ChefStage } from "@/components/loja/chef/chef-stage";
+import { ShareButton } from "@/components/loja/share-button";
 import { VideoBackdrop } from "@/components/loja/video-backdrop";
 import { SITE_PHOTOS } from "@/modules/catalogo/static-photos";
 import { CHEF_CITY, CHEF_FORMATS } from "@/modules/chef/schemas";
@@ -132,34 +132,15 @@ export default function ChefEmkasaPage() {
                 Como funciona
               </a>
             </div>
+            <ShareButton
+              tone="dark"
+              title="Chef Emkasa: a Chef na sua casa"
+              text="A Chef da Emkasa cozinhando na sua casa, em Aracaju:"
+              path="/chef-emkasa"
+              className="self-start"
+            />
           </div>
         </div>
-      </section>
-
-      {/* Mesa posta em 3D */}
-      <section
-        aria-labelledby="mesa-posta"
-        className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-14 pb-10 sm:px-6 md:grid-cols-[0.9fr_1.1fr]"
-      >
-        <div className="flex flex-col gap-4">
-          <p
-            className="text-xs font-semibold tracking-[0.25em] uppercase"
-            style={{ color: GOLD }}
-          >
-            A mesa posta
-          </p>
-          <h2
-            id="mesa-posta"
-            className="font-serif text-3xl text-[#faf3e6] sm:text-4xl"
-          >
-            Levante a tampa.
-          </h2>
-          <p className="text-[#faf3e6]/75">
-            Comida de verdade, montada na hora, servida no seu prato. Toque no
-            prato para abrir e fechar; arraste para girar a mesa.
-          </p>
-        </div>
-        <ChefStage />
       </section>
 
       {/* Quem vai até você */}

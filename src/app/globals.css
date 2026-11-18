@@ -438,3 +438,63 @@
     box-shadow: 0 0 8px rgb(254 210 22 / 0.6);
   }
 }
+
+/* Faixa do topo (D-051): rola sem parar; para com o mouse ou o foco. */
+@keyframes ticker-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: ticker-run 48s linear infinite;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+.ticker::before,
+.ticker::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2.5rem;
+  z-index: 1;
+  pointer-events: none;
+}
+.ticker::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--color-forest-900), transparent);
+}
+.ticker::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--color-forest-900), transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    overflow-x: auto;
+  }
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* Menu completo (D-051): desce do topo com um leve deslizar. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.menu-panel {
+  animation: menu-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.menu-backdrop {
+  animation: menu-in 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel,
+  .menu-backdrop {
+    animation: none;
+  }
+}

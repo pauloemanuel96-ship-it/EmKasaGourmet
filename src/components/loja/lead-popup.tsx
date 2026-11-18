@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { CONSENT_EVENT, readConsent } from "@/modules/consent/cookies";
 import { captureLead, type LeadState } from "@/modules/leads/actions";
-import { rememberOrigin } from "@/modules/leads/origin";
+import { LEAD_OPEN_EVENT, rememberOrigin } from "@/modules/leads/origin";
 import { track } from "@/modules/trafego/tracker";
 import {
   LEAD_CONSENT_TEXT,
@@ -77,6 +77,16 @@ export function LeadPopup() {
       window.removeEventListener("scroll", onScroll);
     };
   }, [quiet]);
+
+  // Quem toca na faixa do topo pede o aviso: abre na hora, em qualquer página.
+  useEffect(() => {
+    const open = () => {
+      setOrigin(JSON.stringify(rememberOrigin()));
+      setMode(leadPopupMode(new Date()));
+    };
+    window.addEventListener(LEAD_OPEN_EVENT, open);
+    return () => window.removeEventListener(LEAD_OPEN_EVENT, open);
+  }, []);
 
   useEffect(() => {
     if (state.status !== "ok") return;

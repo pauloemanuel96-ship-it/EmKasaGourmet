@@ -103,3 +103,10 @@ A página `/chef-emkasa` já recebe pedidos de proposta. Para virar venda com ag
 - cardápios-base com a ficha de alergênicos de cada prato;
 - enquadramento fiscal com o contador;
 - texto da Chef aprovado por ela (o mesmo texto provisório da home) e, se houver, uma foto atual dela cozinhando em casa de cliente.
+
+## Entrar com Google ou Facebook (pedido do Paulo, 18/11/2026)
+O Paulo quer que as pessoas possam se cadastrar e entrar com a conta do Google ou do Facebook, em breve. O site já usa o login do Supabase, que oferece os dois. Depende do Paulo:
+- Google: criar um cliente OAuth no Google Cloud (tela de consentimento com o nome e o logo da Emkasa) e colar o ID e a chave no Supabase (Authentication → Providers → Google);
+- Facebook: criar um app no Meta for Developers (pede política de privacidade publicada e, para uso público, verificação da empresa) e colar o ID e a chave no Supabase;
+- nos dois, cadastrar o endereço de retorno que o Supabase mostra.
+Com isso pronto, entram os botões "Continuar com Google" e "Continuar com Facebook" em Entrar e no cadastro. Antes do Facebook, publicar a página de política de privacidade (já está na fila).

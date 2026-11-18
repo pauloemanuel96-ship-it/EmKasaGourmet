@@ -4,14 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cartCount, useDemo } from "@/demo/store";
+import { SiteMenu } from "./site-menu";
 
+// Só o essencial no topo (D-051); o resto fica agrupado no "Explorar".
 const NAV = [
   { href: "/loja", label: "Loja" },
   { href: "/box", label: "BOX" },
   { href: "/chef-emkasa", label: "Chef em casa" },
-  { href: "/receitas", label: "Receitas" },
-  { href: "/escola", label: "Escola" },
-  { href: "/clube", label: "Clube" },
 ];
 
 export function SiteHeader() {
@@ -63,7 +62,8 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <SiteMenu />
           <Link
             href="/minha-casa"
             className="text-forest-900 hover:bg-sand-200 hidden min-h-11 items-center rounded-(--radius-control) px-3 text-sm font-medium sm:flex"

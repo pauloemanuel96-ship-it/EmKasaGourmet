@@ -32,27 +32,47 @@ function apply(theme: Theme) {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/**
+ * Tema claro ou escuro: só um símbolo pequeno. Mostra o sol no modo claro e a
+ * lua no escuro; o toque troca com um giro suave. A área de toque continua com
+ * 44 px, mesmo o desenho sendo pequeno.
+ */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const theme = useSyncExternalStore<Theme>(subscribe, current, () => "light");
   const dark = theme === "dark";
+  const label = dark ? "Usar modo claro" : "Usar modo escuro";
 
   return (
     <button
       type="button"
-      role="switch"
-      aria-checked={dark}
       onClick={() => apply(dark ? "light" : "dark")}
-      className={`text-ink-600 hover:text-forest-900 inline-flex min-h-11 items-center gap-2 text-sm ${className}`}
+      aria-label={label}
+      title={label}
+      className={`text-ink-600 hover:text-forest-900 relative grid size-11 place-items-center rounded-full transition-colors ${className}`}
     >
-      <span
+      <svg
+        viewBox="0 0 24 24"
         aria-hidden="true"
-        className={`border-ink-600 relative inline-block h-5 w-9 rounded-full border transition-colors ${dark ? "bg-forest-900" : "bg-transparent"}`}
+        className={`absolute size-[18px] transition-all duration-500 ${dark ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
       >
-        <span
-          className={`absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all ${dark ? "bg-cream-50 left-[18px]" : "bg-ink-600 left-0.5"}`}
-        />
-      </span>
-      Modo escuro
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+      </svg>
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className={`absolute size-[17px] transition-all duration-500 ${dark ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-90 opacity-0"}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      >
+        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+      </svg>
     </button>
   );
 }

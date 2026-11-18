@@ -32,3 +32,6 @@ export function rememberOrigin(): LeadOrigin {
     return {};
   }
 }
+
+/** Pedido para abrir o aviso de ofertas (ex.: a faixa do topo). */
+export const LEAD_OPEN_EVENT = "emkasa:abrir-ofertas";
